@@ -7,6 +7,8 @@ import com.project.expensemanager.entity.User;
 import com.project.expensemanager.mapper.UserMapper;
 import com.project.expensemanager.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,10 @@ public class AuthController {
             summary = "Register a new user",
             description = "Creates a new user account using the provided username, email, and password."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registration successful"),
+            @ApiResponse(responseCode = "409", description = "Username or Email already used")
+    })
     @PostMapping("/register")
     public ResponseEntity<Void> register(
             @Valid @RequestBody RegisterRequest request
@@ -47,6 +53,10 @@ public class AuthController {
             summary = "Log in a user",
             description = "Authenticates a user using their username and password and returns a JWT token."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authentication successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid username or password")
+    })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request

@@ -10,6 +10,8 @@ import com.project.expensemanager.model.BudgetSummary;
 import com.project.expensemanager.service.BudgetService;
 import com.project.expensemanager.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,6 +41,11 @@ public class BudgetController {
             summary = "Create a budget",
             description = "Creates a new budget for the authenticated user for the specified budget period."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Budget created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid budget data"),
+            @ApiResponse(responseCode = "409", description = "A budget already exists for the specified period")
+    })
     @PostMapping
     public ResponseEntity<BudgetResponse> createBudget(
             Authentication authentication,
@@ -58,6 +65,10 @@ public class BudgetController {
             summary = "Get budget by ID",
             description = "Returns the specified budget belonging to the authenticated user."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Budget not found")
+    })
     @GetMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> getBudgetById(
             Authentication authentication,
@@ -76,6 +87,10 @@ public class BudgetController {
             summary = "Get budget by period",
             description = "Returns the authenticated user's budget for the specified budget period."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Budget not found")
+    })
     @GetMapping
     public ResponseEntity<BudgetResponse> getBudgetByPeriod(
             Authentication authentication,
@@ -94,6 +109,10 @@ public class BudgetController {
             summary = "Get budget summary",
             description = "Returns a summary of the authenticated user's budget and expenses for the specified budget period."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Budget summary retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Budget not found for the specified period")
+    })
    @GetMapping("/summary")
    public ResponseEntity<BudgetSummaryResponse> getBudgetSummary(
            Authentication authentication,
@@ -112,6 +131,12 @@ public class BudgetController {
             summary = "Update a budget",
             description = "Updates the specified budget belonging to the authenticated user with the provided data."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Budget updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid budget data"),
+            @ApiResponse(responseCode = "404", description = "Budget not found"),
+            @ApiResponse(responseCode = "409", description = "A different budget already exists for this month")
+    })
     @PutMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> updateBudget(
             Authentication authentication,
@@ -132,6 +157,10 @@ public class BudgetController {
             summary = "Delete a budget",
             description = "Deletes the specified budget belonging to the authenticated user."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Deletes the specified budget belonging to the authenticated user"),
+            @ApiResponse(responseCode = "404", description = "Budget not found")
+    })
     @DeleteMapping("/{budgetId}")
     public ResponseEntity<Void> deleteBudget(
             Authentication authentication,

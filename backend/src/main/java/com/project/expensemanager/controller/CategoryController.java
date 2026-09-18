@@ -5,6 +5,8 @@ import com.project.expensemanager.entity.Category;
 import com.project.expensemanager.mapper.CategoryMapper;
 import com.project.expensemanager.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,9 @@ public class CategoryController {
             summary = "Get all expense categories",
             description = "Get all the expense categories."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
+    })
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();

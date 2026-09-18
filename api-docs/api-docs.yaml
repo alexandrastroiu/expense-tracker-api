@@ -34,7 +34,13 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Recurring expense retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+        "404":
+          description: Recurring expense not found
           content:
             '*/*':
               schema:
@@ -61,7 +67,19 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Recurring expense updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+        "400":
+          description: Invalid recurring expense data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+        "404":
+          description: Recurring expense or category not found
           content:
             '*/*':
               schema:
@@ -81,8 +99,10 @@ paths:
           type: integer
           format: int32
       responses:
-        "200":
-          description: OK
+        "204":
+          description: Recurring expense deleted successfully
+        "404":
+          description: Recurring expense not found
   /api/expenses/{expenseId}:
     get:
       tags:
@@ -99,7 +119,13 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Expense retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+        "404":
+          description: Expense not found
           content:
             '*/*':
               schema:
@@ -126,7 +152,19 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Expense updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+        "400":
+          description: Invalid expense data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+        "404":
+          description: Expense or category not found
           content:
             '*/*':
               schema:
@@ -145,8 +183,10 @@ paths:
           type: integer
           format: int32
       responses:
-        "200":
-          description: OK
+        "204":
+          description: Expense deleted successfully
+        "404":
+          description: Expense not found
   /api/budgets/{budgetId}:
     get:
       tags:
@@ -163,7 +203,13 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Budget retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "404":
+          description: Budget not found
           content:
             '*/*':
               schema:
@@ -190,7 +236,25 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Budget updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "400":
+          description: Invalid budget data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "404":
+          description: Budget not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "409":
+          description: A different budget already exists for this month
           content:
             '*/*':
               schema:
@@ -209,8 +273,11 @@ paths:
           type: integer
           format: int32
       responses:
-        "200":
-          description: OK
+        "204":
+          description: Deletes the specified budget belonging to the authenticated
+            user
+        "404":
+          description: Budget not found
   /api/recurringexpenses:
     get:
       tags:
@@ -220,7 +287,7 @@ paths:
       operationId: getAllRecurringExpenses
       responses:
         "200":
-          description: OK
+          description: Recurring expense retrieved successfully
           content:
             '*/*':
               schema:
@@ -240,8 +307,20 @@ paths:
               $ref: "#/components/schemas/RecurringExpenseRequest"
         required: true
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Recurring expense created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+        "400":
+          description: Invalid recurring expense data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+        "404":
+          description: Category not found
           content:
             '*/*':
               schema:
@@ -284,7 +363,23 @@ paths:
           format: date
       responses:
         "200":
-          description: OK
+          description: Expenses retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseResponse"
+        "400":
+          description: Filtering criteria is invalid
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseResponse"
+        "404":
+          description: Category not found
           content:
             '*/*':
               schema:
@@ -304,8 +399,20 @@ paths:
               $ref: "#/components/schemas/ExpenseRequest"
         required: true
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Expense created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+        "400":
+          description: Invalid expense data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+        "404":
+          description: Category not found
           content:
             '*/*':
               schema:
@@ -327,7 +434,13 @@ paths:
           format: date
       responses:
         "200":
-          description: OK
+          description: Budget retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "404":
+          description: Budget not found
           content:
             '*/*':
               schema:
@@ -346,8 +459,20 @@ paths:
               $ref: "#/components/schemas/BudgetRequest"
         required: true
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Budget created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "400":
+          description: Invalid budget data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+        "409":
+          description: A budget already exists for the specified period
           content:
             '*/*':
               schema:
@@ -368,7 +493,9 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Registration successful
+        "409":
+          description: Username or Email already used
   /api/auth/login:
     post:
       tags:
@@ -385,7 +512,13 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: Authentication successful
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid username or password
           content:
             '*/*':
               schema:
@@ -422,7 +555,15 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Recurring expenses retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpenseResponse"
+        "404":
+          description: Category not found
           content:
             '*/*':
               schema:
@@ -450,7 +591,15 @@ paths:
           type: number
       responses:
         "200":
-          description: OK
+          description: Recurring expense retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpenseResponse"
+        "400":
+          description: Invalid filtering criteria
           content:
             '*/*':
               schema:
@@ -490,7 +639,15 @@ paths:
           format: int32
       responses:
         "200":
-          description: OK
+          description: Expenses retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseResponse"
+        "404":
+          description: Category not found
           content:
             '*/*':
               schema:
@@ -506,7 +663,7 @@ paths:
       operationId: getAllCategories
       responses:
         "200":
-          description: OK
+          description: Categories retrieved successfully
           content:
             '*/*':
               schema:
@@ -530,7 +687,13 @@ paths:
           format: date
       responses:
         "200":
-          description: OK
+          description: Budget summary retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetSummaryResponse"
+        "404":
+          description: Budget not found for the specified period
           content:
             '*/*':
               schema:

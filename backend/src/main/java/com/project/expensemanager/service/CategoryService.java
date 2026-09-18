@@ -1,6 +1,5 @@
 package com.project.expensemanager.service;
 
-import com.project.expensemanager.dto.category.CategoryResponse;
 import com.project.expensemanager.entity.Category;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.CategoryRepository;

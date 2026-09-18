@@ -6,6 +6,8 @@ import com.project.expensemanager.dto.auth.RegisterRequest;
 import com.project.expensemanager.entity.User;
 import com.project.expensemanager.mapper.UserMapper;
 import com.project.expensemanager.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Authentication", description = "Authentication")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -26,6 +29,10 @@ public class AuthController {
         this.authService = service;
     }
 
+    @Operation(
+            summary = "Register a new user",
+            description = "Creates a new user account using the provided username, email, and password."
+    )
     @PostMapping("/register")
     public ResponseEntity<Void> register(
             @Valid @RequestBody RegisterRequest request
@@ -36,6 +43,10 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(null);
     }
 
+    @Operation(
+            summary = "Log in a user",
+            description = "Authenticates a user using their username and password and returns a JWT token."
+    )
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request

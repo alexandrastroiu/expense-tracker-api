@@ -10,6 +10,8 @@ import com.project.expensemanager.mapper.ExpenseMapper;
 import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.ExpenseService;
 import com.project.expensemanager.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "Expenses", description = "Manage user expenses")
 @RestController
 @RequestMapping("/api/expenses")        // Base URL
 public class ExpenseController {
@@ -37,6 +40,10 @@ public class ExpenseController {
     }
 
     // Create
+    @Operation(
+            summary = "Create an expense",
+            description = "Creates a new expense for the authenticated user."
+    )
     @PostMapping
     public ResponseEntity<ExpenseResponse> createExpense(
             Authentication authentication,
@@ -55,6 +62,10 @@ public class ExpenseController {
             }
 
     // Get expense by ID
+    @Operation(
+            summary = "Get expense by ID",
+            description = "Returns the specified expense belonging to the authenticated user."
+    )
     @GetMapping("/{expenseId}")
     public ResponseEntity<ExpenseResponse> getExpenseById(
             Authentication authentication,
@@ -69,6 +80,10 @@ public class ExpenseController {
     }
 
     // Filter expenses
+    @Operation(
+            summary = "Get all expenses",
+            description = "Returns all expenses belonging to the authenticated user."
+    )
     @GetMapping
     public ResponseEntity<List<ExpenseResponse>> getExpenses(
             Authentication authentication,
@@ -87,6 +102,10 @@ public class ExpenseController {
         }
 
      // Search expenses
+     @Operation(
+             summary = "Search expenses",
+             description = "Returns the authenticated user's expenses that match the specified search criteria."
+     )
     @GetMapping("/search")
     public ResponseEntity<List<ExpenseResponse>> searchExpenses (
         Authentication authentication,
@@ -110,6 +129,10 @@ public class ExpenseController {
     }
 
     // Update
+    @Operation(
+            summary = "Update an expense",
+            description = "Updates the specified expense belonging to the authenticated user with the provided data."
+    )
     @PutMapping("/{expenseId}")
     public ResponseEntity<ExpenseResponse> updateExpense(
             Authentication authentication,
@@ -127,6 +150,10 @@ public class ExpenseController {
     }
 
     // Delete
+    @Operation(
+            summary = "Delete an expense",
+            description = "Deletes the specified expense belonging to the authenticated user."
+    )
     @DeleteMapping("/{expenseId}")
     public ResponseEntity<Void> deleteExpense(
             Authentication authentication,

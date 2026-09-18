@@ -1,0 +1,742 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+tags:
+- name: Budgets
+  description: Manage user budgets
+- name: Expenses
+  description: Manage user expenses
+- name: Authentication
+  description: Authentication
+- name: Categories
+  description: Expense Categories
+- name: Recurring Expenses
+  description: Manage user recurring expenses
+paths:
+  /api/recurringexpenses/{recurringExpenseId}:
+    get:
+      tags:
+      - Recurring Expenses
+      summary: Get recurring expense by ID
+      description: Returns the specified recurring expense belonging to the authenticated
+        user.
+      operationId: getExpenseById
+      parameters:
+      - name: recurringExpenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+    put:
+      tags:
+      - Recurring Expenses
+      summary: Update a recurring expense
+      description: Updates the specified recurring expense belonging to the authenticated
+        user with the provided data.
+      operationId: updateRecurringExpense
+      parameters:
+      - name: recurringExpenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringExpenseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+    delete:
+      tags:
+      - Recurring Expenses
+      summary: Delete a recurring expense
+      description: Deletes the specified recurring expense belonging to the authenticated
+        user.
+      operationId: deleteRecurringExpense
+      parameters:
+      - name: recurringExpenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+  /api/expenses/{expenseId}:
+    get:
+      tags:
+      - Expenses
+      summary: Get expense by ID
+      description: Returns the specified expense belonging to the authenticated user.
+      operationId: getExpenseById_1
+      parameters:
+      - name: expenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+    put:
+      tags:
+      - Expenses
+      summary: Update an expense
+      description: Updates the specified expense belonging to the authenticated user
+        with the provided data.
+      operationId: updateExpense
+      parameters:
+      - name: expenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+    delete:
+      tags:
+      - Expenses
+      summary: Delete an expense
+      description: Deletes the specified expense belonging to the authenticated user.
+      operationId: deleteExpense
+      parameters:
+      - name: expenseId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+  /api/budgets/{budgetId}:
+    get:
+      tags:
+      - Budgets
+      summary: Get budget by ID
+      description: Returns the specified budget belonging to the authenticated user.
+      operationId: getBudgetById
+      parameters:
+      - name: budgetId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+    put:
+      tags:
+      - Budgets
+      summary: Update a budget
+      description: Updates the specified budget belonging to the authenticated user
+        with the provided data.
+      operationId: updateBudget
+      parameters:
+      - name: budgetId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+    delete:
+      tags:
+      - Budgets
+      summary: Delete a budget
+      description: Deletes the specified budget belonging to the authenticated user.
+      operationId: deleteBudget
+      parameters:
+      - name: budgetId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+  /api/recurringexpenses:
+    get:
+      tags:
+      - Recurring Expenses
+      summary: Get all recurring expenses
+      description: Returns all recurring expenses belonging to the authenticated user.
+      operationId: getAllRecurringExpenses
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpenseResponse"
+    post:
+      tags:
+      - Recurring Expenses
+      summary: Create a recurring expense
+      description: Creates a new recurring expense for the authenticated user.
+      operationId: createRecurringExpense
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringExpenseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurringExpenseResponse"
+  /api/expenses:
+    get:
+      tags:
+      - Expenses
+      summary: Get all expenses
+      description: Returns all expenses belonging to the authenticated user.
+      operationId: getExpenses
+      parameters:
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - name: minAmount
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: maxAmount
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: start
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseResponse"
+    post:
+      tags:
+      - Expenses
+      summary: Create an expense
+      description: Creates a new expense for the authenticated user.
+      operationId: createExpense
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExpenseResponse"
+  /api/budgets:
+    get:
+      tags:
+      - Budgets
+      summary: Get budget by period
+      description: Returns the authenticated user's budget for the specified budget
+        period.
+      operationId: getBudgetByPeriod
+      parameters:
+      - name: period
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+    post:
+      tags:
+      - Budgets
+      summary: Create a budget
+      description: Creates a new budget for the authenticated user for the specified
+        budget period.
+      operationId: createBudget
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetResponse"
+  /api/auth/register:
+    post:
+      tags:
+      - Authentication
+      summary: Register a new user
+      description: "Creates a new user account using the provided username, email,\
+        \ and password."
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/auth/login:
+    post:
+      tags:
+      - Authentication
+      summary: Log in a user
+      description: Authenticates a user using their username and password and returns
+        a JWT token.
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+  /api/recurringexpenses/search:
+    get:
+      tags:
+      - Recurring Expenses
+      summary: Search recurring expenses
+      description: Returns the authenticated user's recurring expenses that match
+        the specified search criteria.
+      operationId: searchRecurringExpenses
+      parameters:
+      - name: title
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: frequency
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - DAILY
+          - WEEKLY
+          - MONTHLY
+          - YEARLY
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpenseResponse"
+  /api/recurringexpenses/filter:
+    get:
+      tags:
+      - Recurring Expenses
+      summary: Filter recurring expenses
+      description: Returns the authenticated user's recurring expenses that match
+        the specified filter criteria.
+      operationId: filterRecurringExpenses
+      parameters:
+      - name: minAmount
+        in: query
+        required: true
+        schema:
+          type: number
+      - name: maxAmount
+        in: query
+        required: true
+        schema:
+          type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecurringExpenseResponse"
+  /api/expenses/search:
+    get:
+      tags:
+      - Expenses
+      summary: Search expenses
+      description: Returns the authenticated user's expenses that match the specified
+        search criteria.
+      operationId: searchExpenses
+      parameters:
+      - name: title
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: expenseDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: amount
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpenseResponse"
+  /api/categories:
+    get:
+      tags:
+      - Categories
+      summary: Get all expense categories
+      description: Get all the expense categories.
+      operationId: getAllCategories
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryResponse"
+  /api/budgets/summary:
+    get:
+      tags:
+      - Budgets
+      summary: Get budget summary
+      description: Returns a summary of the authenticated user's budget and expenses
+        for the specified budget period.
+      operationId: getBudgetSummary
+      parameters:
+      - name: period
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BudgetSummaryResponse"
+components:
+  schemas:
+    RecurringExpenseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          minLength: 0
+        description:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        categoryId:
+          type: integer
+          format: int32
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        frequency:
+          type: string
+          enum:
+          - DAILY
+          - WEEKLY
+          - MONTHLY
+          - YEARLY
+      required:
+      - amount
+      - categoryId
+      - frequency
+      - startDate
+      - title
+    RecurringExpenseResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        categoryId:
+          type: integer
+          format: int32
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        frequency:
+          type: string
+          enum:
+          - DAILY
+          - WEEKLY
+          - MONTHLY
+          - YEARLY
+    ExpenseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          minLength: 0
+        description:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        categoryId:
+          type: integer
+          format: int32
+        expenseDate:
+          type: string
+          format: date
+      required:
+      - amount
+      - categoryId
+      - expenseDate
+      - title
+    ExpenseResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        title:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        categoryId:
+          type: integer
+          format: int32
+        expenseDate:
+          type: string
+          format: date
+    BudgetRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        budgetPeriod:
+          type: string
+          format: date
+      required:
+      - amount
+      - budgetPeriod
+    BudgetResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        amount:
+          type: number
+        budgetPeriod:
+          type: string
+          format: date
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          minLength: 0
+        firstName:
+          type: string
+          maxLength: 50
+          minLength: 0
+        lastName:
+          type: string
+          maxLength: 50
+          minLength: 0
+        password:
+          type: string
+          maxLength: 255
+          minLength: 0
+        email:
+          type: string
+          maxLength: 100
+          minLength: 0
+      required:
+      - email
+      - firstName
+      - lastName
+      - password
+      - username
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          minLength: 0
+        password:
+          type: string
+          maxLength: 255
+          minLength: 0
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        categoryName:
+          type: string
+    BudgetSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        amount:
+          type: number
+        budgetPeriod:
+          type: string
+          format: date
+        totalCurrentExpenses:
+          type: number
+        totalMonthlyExpenses:
+          type: number
+        remainingCurrentBudget:
+          type: number
+        remainingMonthlyBudget:
+          type: number
+        budgetPercentage:
+          type: number

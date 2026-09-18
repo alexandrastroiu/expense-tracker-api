@@ -9,6 +9,8 @@ import com.project.expensemanager.mapper.BudgetMapper;
 import com.project.expensemanager.model.BudgetSummary;
 import com.project.expensemanager.service.BudgetService;
 import com.project.expensemanager.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+@Tag(name = "Budgets", description = "Manage user budgets")
 @RestController
 @RequestMapping("/api/budgets")    // Base URL
 public class BudgetController {
@@ -32,6 +35,10 @@ public class BudgetController {
     }
 
     // Create
+    @Operation(
+            summary = "Create a budget",
+            description = "Creates a new budget for the authenticated user for the specified budget period."
+    )
     @PostMapping
     public ResponseEntity<BudgetResponse> createBudget(
             Authentication authentication,
@@ -47,6 +54,10 @@ public class BudgetController {
     }
 
     // Get budget by ID
+    @Operation(
+            summary = "Get budget by ID",
+            description = "Returns the specified budget belonging to the authenticated user."
+    )
     @GetMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> getBudgetById(
             Authentication authentication,
@@ -61,6 +72,10 @@ public class BudgetController {
     }
 
     // Get budget by period
+    @Operation(
+            summary = "Get budget by period",
+            description = "Returns the authenticated user's budget for the specified budget period."
+    )
     @GetMapping
     public ResponseEntity<BudgetResponse> getBudgetByPeriod(
             Authentication authentication,
@@ -75,6 +90,10 @@ public class BudgetController {
     }
 
     // Budget summary
+    @Operation(
+            summary = "Get budget summary",
+            description = "Returns a summary of the authenticated user's budget and expenses for the specified budget period."
+    )
    @GetMapping("/summary")
    public ResponseEntity<BudgetSummaryResponse> getBudgetSummary(
            Authentication authentication,
@@ -89,6 +108,10 @@ public class BudgetController {
    }
 
     // Update
+    @Operation(
+            summary = "Update a budget",
+            description = "Updates the specified budget belonging to the authenticated user with the provided data."
+    )
     @PutMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> updateBudget(
             Authentication authentication,
@@ -105,6 +128,10 @@ public class BudgetController {
     }
 
     // Delete
+    @Operation(
+            summary = "Delete a budget",
+            description = "Deletes the specified budget belonging to the authenticated user."
+    )
     @DeleteMapping("/{budgetId}")
     public ResponseEntity<Void> deleteBudget(
             Authentication authentication,

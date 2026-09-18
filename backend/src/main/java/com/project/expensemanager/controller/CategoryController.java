@@ -4,6 +4,8 @@ import com.project.expensemanager.dto.category.CategoryResponse;
 import com.project.expensemanager.entity.Category;
 import com.project.expensemanager.mapper.CategoryMapper;
 import com.project.expensemanager.service.CategoryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Tag(name = "Categories", description = "Expense Categories")
 @RestController
 @RequestMapping("/api/categories")   // Base URL
 public class CategoryController {
@@ -24,6 +27,10 @@ public class CategoryController {
     }
 
     // Get all categories
+    @Operation(
+            summary = "Get all expense categories",
+            description = "Get all the expense categories."
+    )
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         List<Category> categories = categoryService.getAllCategories();
@@ -31,5 +38,4 @@ public class CategoryController {
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-
 }

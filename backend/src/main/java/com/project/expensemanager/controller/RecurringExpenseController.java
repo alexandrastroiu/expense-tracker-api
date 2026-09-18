@@ -10,6 +10,8 @@ import com.project.expensemanager.mapper.RecurringExpenseMapper;
 import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.RecurringExpenseService;
 import com.project.expensemanager.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
 @RestController
 @RequestMapping("/api/recurringexpenses")  // Base URL
 public class RecurringExpenseController {
@@ -36,6 +39,10 @@ public class RecurringExpenseController {
     }
 
     // Create
+    @Operation(
+            summary = "Create a recurring expense",
+            description = "Creates a new recurring expense for the authenticated user."
+    )
     @PostMapping
     public ResponseEntity<RecurringExpenseResponse> createRecurringExpense(
             Authentication authentication,
@@ -52,6 +59,10 @@ public class RecurringExpenseController {
     }
 
     // Update
+    @Operation(
+            summary = "Update a recurring expense",
+            description = "Updates the specified recurring expense belonging to the authenticated user with the provided data."
+    )
     @PutMapping("/{recurringExpenseId}")
     public ResponseEntity<RecurringExpenseResponse> updateRecurringExpense(
             Authentication authentication,
@@ -69,6 +80,10 @@ public class RecurringExpenseController {
     }
 
     // Get all user recurring expenses
+    @Operation(
+            summary = "Get all recurring expenses",
+            description = "Returns all recurring expenses belonging to the authenticated user."
+    )
     @GetMapping
     public ResponseEntity<List<RecurringExpenseResponse>> getAllRecurringExpenses(
             Authentication authentication
@@ -82,6 +97,10 @@ public class RecurringExpenseController {
     }
 
     // Get recurring expense by ID
+    @Operation(
+            summary = "Get recurring expense by ID",
+            description = "Returns the specified recurring expense belonging to the authenticated user."
+    )
     @GetMapping("/{recurringExpenseId}")
     public ResponseEntity<RecurringExpenseResponse> getExpenseById(
             Authentication authentication,
@@ -96,6 +115,10 @@ public class RecurringExpenseController {
     }
 
     // Search recurring expenses
+    @Operation(
+            summary = "Search recurring expenses",
+            description = "Returns the authenticated user's recurring expenses that match the specified search criteria."
+    )
     @GetMapping("/search")
     public ResponseEntity<List<RecurringExpenseResponse>> searchRecurringExpenses (
             Authentication authentication,
@@ -117,6 +140,10 @@ public class RecurringExpenseController {
     }
 
     // Filter recurring expenses by amount
+    @Operation(
+            summary = "Filter recurring expenses",
+            description = "Returns the authenticated user's recurring expenses that match the specified filter criteria."
+    )
     @GetMapping("/filter")
     public ResponseEntity<List<RecurringExpenseResponse>> filterRecurringExpenses (
             Authentication authentication,
@@ -133,6 +160,10 @@ public class RecurringExpenseController {
     }
 
     // Delete
+    @Operation(
+            summary = "Delete a recurring expense",
+            description = "Deletes the specified recurring expense belonging to the authenticated user."
+    )
     @DeleteMapping("/{recurringExpenseId}")
     public ResponseEntity<Void> deleteRecurringExpense(
             Authentication authentication,

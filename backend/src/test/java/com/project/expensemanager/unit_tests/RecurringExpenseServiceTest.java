@@ -181,27 +181,85 @@ public class RecurringExpenseServiceTest {
 
     @Test
     public void getAllUserRecurringExpenses_ReturnsCorrectData() {
+        Integer id = 1;
+        Category category = new Category("Entertainment");
+        category.setId(id);
+        List<RecurringExpense> expected = List.of(new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY));
+        expected.getFirst().setId(id);
 
+        when(recurringExpenseRepository.findByUser(user)).thenReturn(expected);
+        List<RecurringExpense> result = recurringExpenseService.getAllUserRecurringExpenses(user);
+        assertSame(expected, result);
+        verify(recurringExpenseRepository).findByUser(user);
     }
 
     @Test
     public void searchRecurringExpenses_WithCriteria_ReturnsCorrectData() {
+        Integer id = 1;
+        String title = "Netflix subscription";
+        Category category = new Category("Entertainment");
+        category.setId(id);
+        List<RecurringExpense> recurringExpenses = List.of(
+                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
+                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
+        );
+        List<RecurringExpense> expected = List.of(recurringExpenses.get(1));
 
+        when(recurringExpenseRepository.findByUser(user)).thenReturn(List.of(recurringExpenses.get(1)));
+        List<RecurringExpense> result = recurringExpenseService.searchRecurringExpenses(user, title, null, null);
+        assertEquals(expected, result);
+        verify(recurringExpenseRepository).findByUser(user);
     }
 
     @Test
     public void searchRecurringExpenses_WithNoCriteria_ReturnsCorrectData() {
+        Integer id = 1;
+        Category category = new Category("Entertainment");
+        category.setId(id);
+        List<RecurringExpense> recurringExpenses = List.of(
+                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
+                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
+        );
 
+        when(recurringExpenseRepository.findByUser(user)).thenReturn(recurringExpenses);
+        List<RecurringExpense> result = recurringExpenseService.searchRecurringExpenses(user, null, null, null);
+        assertEquals(recurringExpenses, result);
+        verify(recurringExpenseRepository).findByUser(user);
     }
 
     @Test
     public void filterRecurringExpensesByAmount_ReturnsCorrectData() {
+        Integer id = 1;
+        Category category = new Category("Entertainment");
+        category.setId(id);
+        BigDecimal minAmount = new BigDecimal("2.00"), maxAmount = new BigDecimal("5.00");
+        List<RecurringExpense> recurringExpenses = List.of(
+                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
+                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
+        );
+        List<RecurringExpense> expected = List.of(recurringExpenses.getFirst());
 
+        when(recurringExpenseRepository.findByUserAndAmountBetween(user, minAmount, maxAmount)).thenReturn(expected);
+        List<RecurringExpense> result = recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount);
+        assertEquals(expected, result);
+        verify(recurringExpenseRepository).findByUserAndAmountBetween(user, minAmount, maxAmount);
     }
 
     @Test
     public void filterRecurringExpensesByAmount_WithInvalidFilter_ThrowsInvalidRequestException() {
+        Integer id = 1;
+        Category category = new Category("Entertainment");
+        category.setId(id);
+        BigDecimal minAmount = new BigDecimal("5.00"), maxAmount = new BigDecimal("2.00");
+        List<RecurringExpense> recurringExpenses = List.of(
+                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
+                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
+        );
+        List<RecurringExpense> expected = List.of(recurringExpenses.getFirst());
 
+        Exception exception = assertThrows(InvalidRequestException.class,
+                () -> recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount));
+        assertEquals("Minimum amount cannot be greater than maximum amount", exception.getMessage());
     }
 
     // Test update method

@@ -45,21 +45,4 @@ public class JWTService {
                 .getSubject();
     }
 
-    public Date extractExpirationDateFromToken(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration();
-    }
-
-    public boolean isValidToken(String token, UserDetails userDetails) {
-        return extractUsernameFromToken(token).equals(userDetails.getUsername()) && !isExpiredToken(token);
-    }
-
-    // Helper method
-    private boolean isExpiredToken(String token) {
-        return extractExpirationDateFromToken(token).before(new Date());
-    }
 }

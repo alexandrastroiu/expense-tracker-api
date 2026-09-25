@@ -10,6 +10,8 @@ import com.project.expensemanager.model.BudgetSummary;
 import com.project.expensemanager.repository.BudgetRepository;
 import com.project.expensemanager.repository.ExpenseRepository;
 import com.project.expensemanager.repository.RecurringExpenseRepository;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,7 +43,15 @@ public class BudgetService {
             throw new BudgetExistsException("Budget already exists for this month.");
         }
 
-        return budgetRepository.save(savedBudget);
+        try {
+            return budgetRepository.saveAndFlush(savedBudget);
+        }
+        catch (DataIntegrityViolationException exception) {     // Edge case, check if a database rule was broken
+            if (isMonthlyBudgetDuplicate(exception)) {
+                throw new BudgetExistsException("Budget already exists for this month.");       // The database budget uniqueness constraint was broken
+            }
+            throw exception;        // Another database constraint was broken
+        }
     }
 
     // Read
@@ -64,7 +74,16 @@ public class BudgetService {
 
         budget.setAmount(updatedBudget.getAmount());
         budget.setBudgetPeriod(budgetPeriod);
-        return budgetRepository.save(budget);
+
+        try {
+            return budgetRepository.saveAndFlush(budget);
+        }
+        catch (DataIntegrityViolationException exception) {     // Edge case, check if a database rule was broken
+            if (isMonthlyBudgetDuplicate(exception)) {
+                throw new BudgetExistsException("Budget already exists for this month.");       // The database budget uniqueness constraint was broken
+            }
+            throw exception;        // Another database constraint was broken
+        }
     }
 
     // Delete
@@ -185,6 +204,17 @@ public class BudgetService {
                     getRemainingMonthlyBudget(user, period),
                     getBudgetPercentage(user, period)
             );
+    }
+
+    // Helper method
+    // Checks if an exception is caused by the database "unique_monthly_budget_per_user" constraint
+    private boolean isMonthlyBudgetDuplicate(Throwable exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException constraintException && "unique_monthly_budget_per_user".equals(constraintException.getConstraintName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

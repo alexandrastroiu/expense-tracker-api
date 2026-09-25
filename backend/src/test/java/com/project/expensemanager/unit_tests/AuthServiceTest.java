@@ -69,7 +69,7 @@ public class AuthServiceTest {
         authService.register(user, rawPassword);
 
         verify(passwordEncoder).encode(rawPassword);
-        verify(userRepository).save(user);
+        verify(userRepository).saveAndFlush(user);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class AuthServiceTest {
         Exception exception = assertThrows(UserExistsException.class,
                 () -> authService.register(user, rawPassword));
         Assertions.assertEquals("Username is already registered.", exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).saveAndFlush(any(User.class));
         verify(passwordEncoder, never()).encode(anyString());
     }
 
@@ -93,7 +93,7 @@ public class AuthServiceTest {
         Exception exception = assertThrows(UserExistsException.class,
                 () -> authService.register(user, rawPassword));
         Assertions.assertEquals("Email is already registered.", exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository, never()).saveAndFlush(any(User.class));
         verify(passwordEncoder, never()).encode(anyString());
     }
 

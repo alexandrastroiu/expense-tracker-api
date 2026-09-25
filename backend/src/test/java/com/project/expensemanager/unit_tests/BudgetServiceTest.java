@@ -59,14 +59,14 @@ public class BudgetServiceTest {
         savedBudget.setId(1);
 
         when(budgetRepository.existsByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1))).thenReturn(false);
-        when(budgetRepository.save(any(Budget.class))).thenReturn(savedBudget);
+        when(budgetRepository.saveAndFlush(any(Budget.class))).thenReturn(savedBudget);
         Budget result = budgetService.createBudget(user, savedBudget);
         assertEquals(savedBudget, result);
         assertEquals(1, result.getId());
         assertEquals(new BigDecimal("1000.00"), result.getAmount());
         assertEquals(LocalDate.of(2026, 9, 1), result.getBudgetPeriod());
         verify(budgetRepository).existsByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1));
-        verify(budgetRepository).save(any(Budget.class));
+        verify(budgetRepository).saveAndFlush(any(Budget.class));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class BudgetServiceTest {
         when(budgetRepository.existsByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1))).thenReturn(true);
         BudgetExistsException exception = assertThrows(BudgetExistsException.class, () -> budgetService.createBudget(user, budget));
         assertEquals("Budget already exists for this month.", exception.getMessage());
-        verify(budgetRepository, never()).save(any(Budget.class));
+        verify(budgetRepository, never()).saveAndFlush(any(Budget.class));
     }
 
     // Test read methods
@@ -225,11 +225,11 @@ public class BudgetServiceTest {
 
         when(budgetRepository.findByUserAndId(user, budgetId)).thenReturn(Optional.of(existingBudget));
         when(budgetRepository.existsByUserAndBudgetPeriod(user, period)).thenReturn(true);
-        when(budgetRepository.save(existingBudget)).thenReturn(existingBudget);
+        when(budgetRepository.saveAndFlush(existingBudget)).thenReturn(existingBudget);
         Budget result = budgetService.updateBudget(user, budgetId, updatedBudget);
         assertEquals(new BigDecimal("1200.00"), result.getAmount());
         assertEquals(period, result.getBudgetPeriod());
-        verify(budgetRepository).save(existingBudget);
+        verify(budgetRepository).saveAndFlush(existingBudget);
     }
 
     @Test
@@ -243,7 +243,7 @@ public class BudgetServiceTest {
         when(budgetRepository.existsByUserAndBudgetPeriod(user, LocalDate.of(2026, 10, 1))).thenReturn(true);
         BudgetExistsException exception = assertThrows(BudgetExistsException.class, () -> budgetService.updateBudget(user, budgetId, updatedBudget));
         assertEquals("A different budget already exists for this month.", exception.getMessage());
-        verify(budgetRepository, never()).save(any(Budget.class));
+        verify(budgetRepository, never()).saveAndFlush(any(Budget.class));
     }
 
     @Test
@@ -257,7 +257,7 @@ public class BudgetServiceTest {
                 () -> budgetService.updateBudget(user, budgetId, updatedBudget)
         );
         assertEquals("Budget not found", exception.getMessage());
-        verify(budgetRepository, never()).save(any(Budget.class));
+        verify(budgetRepository, never()).saveAndFlush(any(Budget.class));
     }
 
     // Test delete method

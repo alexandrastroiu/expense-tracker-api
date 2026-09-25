@@ -26,7 +26,7 @@ public class AuthController {
     private final UserMapper userMapper;
     private final AuthService authService;
 
-    private AuthController(AuthService service, UserMapper userMapper) {
+    public AuthController(AuthService service, UserMapper userMapper) {
         this.userMapper = userMapper;
         this.authService = service;
     }

@@ -1,17 +1,25 @@
 package com.project.expensemanager.exception;
 
 import com.project.expensemanager.dto.error.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // Centralize error-handling logic
 
@@ -99,18 +107,51 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException exception
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
     ) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining("; "));
+
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad request",
-                exception.getMessage()
+                status.value(),
+                "Bad Request",
+                message
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return new ResponseEntity<>(response, headers, status);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+            Exception exception,
+            Object body,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request
+    ) {
+        String error = switch (status.value()) {
+            case 400 -> "Bad Request";
+            case 405 -> "Method Not Allowed";
+            case 415 -> "Unsupported Media Type";
+            default -> "Request Error";
+        };
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                error,
+                error
+        );
+
+        return new ResponseEntity<>(response, headers, status);
     }
 
     // Fallback for all exceptions
@@ -118,11 +159,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneral(
             Exception exception
     ){
+        log.error("Unexpected error while processing request", exception);      // Log errors
+
         ErrorResponse response = new ErrorResponse(
             LocalDateTime.now(),
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Internal Server Error",
-                exception.getMessage()
+                "An unexpected error occurred."
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);

@@ -44,7 +44,7 @@ CREATE TABLE recurring_expenses(
 CREATE TABLE budgets(
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    amount NUMERIC(9, 2) NOT NULL CHECK (amount >= 0),
+    amount NUMERIC(9, 2) NOT NULL CHECK (amount > 0),
     budget_period DATE NOT NULL,
 
     CONSTRAINT unique_monthly_budget_per_user UNIQUE (user_id, budget_period)

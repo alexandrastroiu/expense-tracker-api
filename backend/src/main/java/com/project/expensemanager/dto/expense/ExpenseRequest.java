@@ -10,6 +10,7 @@ public record ExpenseRequest (
         @Size(max = 100, message = "Title cannot exceed 100 characters")
         String title,
 
+        @Size(max = 500, message = "Description cannot exceed 100 characters")
         String description,
 
         @NotNull(message = "Expense amount is required")

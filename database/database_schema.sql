@@ -21,7 +21,7 @@ CREATE TABLE expenses(
     id  SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
-    description TEXT,
+    description VARCHAR(500),
     amount NUMERIC(9, 2) NOT NULL CHECK (amount > 0),
     category_id INT NOT NULL REFERENCES categories(id),
     expense_date DATE NOT NULL
@@ -32,7 +32,7 @@ CREATE TABLE recurring_expenses(
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
-    description TEXT,
+    description VARCHAR(500),
     amount NUMERIC(9,2) NOT NULL CHECK (amount > 0),
     category_id INT NOT NULL REFERENCES categories(id),
     start_date DATE NOT NULL,

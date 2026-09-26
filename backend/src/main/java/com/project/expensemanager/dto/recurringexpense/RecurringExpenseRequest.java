@@ -1,10 +1,7 @@
 package com.project.expensemanager.dto.recurringexpense;
 
 import com.project.expensemanager.entity.Frequency;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,6 +14,8 @@ public record RecurringExpenseRequest(
         String description,
 
         @NotNull(message = "Expense amount is required")
+        @Digits(integer = 7, fraction = 2)
+        @DecimalMin("0.01")
         @Positive(message = "Amount must be positive")
         BigDecimal amount,
 

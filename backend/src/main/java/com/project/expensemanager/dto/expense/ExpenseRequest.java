@@ -1,9 +1,6 @@
 package com.project.expensemanager.dto.expense;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,6 +13,8 @@ public record ExpenseRequest (
         String description,
 
         @NotNull(message = "Expense amount is required")
+        @Digits(integer = 7, fraction = 2)
+        @DecimalMin("0.01")
         @Positive(message = "Amount must be positive")
         BigDecimal amount,
 

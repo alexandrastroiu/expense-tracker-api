@@ -12,8 +12,4 @@ public class CategoryMapper {
         return new CategoryResponse(category.getId(), category.getCategoryName());
     }
 
-    // Map request to entity
-    public Category mapToEntity(CategoryResponse request) {
-        return new Category(request.categoryName());
-    }
 }

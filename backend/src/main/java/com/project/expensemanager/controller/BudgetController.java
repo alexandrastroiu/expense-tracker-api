@@ -3,6 +3,7 @@ package com.project.expensemanager.controller;
 import com.project.expensemanager.dto.budget.BudgetRequest;
 import com.project.expensemanager.dto.budget.BudgetResponse;
 import com.project.expensemanager.dto.budget.BudgetSummaryResponse;
+import com.project.expensemanager.dto.error.ErrorResponse;
 import com.project.expensemanager.entity.Budget;
 import com.project.expensemanager.entity.User;
 import com.project.expensemanager.mapper.BudgetMapper;
@@ -10,8 +11,11 @@ import com.project.expensemanager.model.BudgetSummary;
 import com.project.expensemanager.service.BudgetService;
 import com.project.expensemanager.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Budgets", description = "Manage user budgets")
 @RestController
 @RequestMapping("/api/budgets")    // Base URL
@@ -42,9 +47,9 @@ public class BudgetController {
             description = "Creates a new budget for the authenticated user for the specified budget period."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Budget created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid budget data"),
-            @ApiResponse(responseCode = "409", description = "A budget already exists for the specified period")
+            @ApiResponse(responseCode = "201", description = "Budget created successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid budget data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "A budget already exists for the specified period", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<BudgetResponse> createBudget(
@@ -66,8 +71,8 @@ public class BudgetController {
             description = "Returns the specified budget belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Budget not found")
+            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> getBudgetById(
@@ -88,8 +93,8 @@ public class BudgetController {
             description = "Returns the authenticated user's budget for the specified budget period."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Budget not found")
+            @ApiResponse(responseCode = "200", description = "Budget retrieved successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public ResponseEntity<BudgetResponse> getBudgetByPeriod(
@@ -110,8 +115,8 @@ public class BudgetController {
             description = "Returns a summary of the authenticated user's budget and expenses for the specified budget period."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Budget summary retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Budget not found for the specified period")
+            @ApiResponse(responseCode = "200", description = "Budget summary retrieved successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Budget not found for the specified period", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
    @GetMapping("/summary")
    public ResponseEntity<BudgetSummaryResponse> getBudgetSummary(
@@ -132,10 +137,10 @@ public class BudgetController {
             description = "Updates the specified budget belonging to the authenticated user with the provided data."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Budget updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid budget data"),
-            @ApiResponse(responseCode = "404", description = "Budget not found"),
-            @ApiResponse(responseCode = "409", description = "A different budget already exists for this month")
+            @ApiResponse(responseCode = "200", description = "Budget updated successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid budget data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "A different budget already exists for this month", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{budgetId}")
     public ResponseEntity<BudgetResponse> updateBudget(
@@ -158,8 +163,8 @@ public class BudgetController {
             description = "Deletes the specified budget belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Deletes the specified budget belonging to the authenticated user"),
-            @ApiResponse(responseCode = "404", description = "Budget not found")
+            @ApiResponse(responseCode = "204", description = "Deletes the specified budget belonging to the authenticated user", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Budget not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{budgetId}")
     public ResponseEntity<Void> deleteBudget(

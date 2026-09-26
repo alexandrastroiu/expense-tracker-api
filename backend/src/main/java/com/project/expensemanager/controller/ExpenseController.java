@@ -1,5 +1,6 @@
 package com.project.expensemanager.controller;
 
+import com.project.expensemanager.dto.error.ErrorResponse;
 import com.project.expensemanager.dto.expense.ExpenseRequest;
 import com.project.expensemanager.dto.expense.ExpenseResponse;
 import com.project.expensemanager.entity.Category;
@@ -10,8 +11,11 @@ import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.ExpenseService;
 import com.project.expensemanager.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Expenses", description = "Manage user expenses")
 @RestController
 @RequestMapping("/api/expenses")        // Base URL
@@ -46,9 +51,9 @@ public class ExpenseController {
             description = "Creates a new expense for the authenticated user."
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Expense created successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid expense data"),
-        @ApiResponse(responseCode = "404", description = "Category not found"),
+        @ApiResponse(responseCode = "201", description = "Expense created successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid expense data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<ExpenseResponse> createExpense(
@@ -73,8 +78,8 @@ public class ExpenseController {
             description = "Returns the specified expense belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expense retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Expense not found"),
+            @ApiResponse(responseCode = "200", description = "Expense retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/{expenseId}")
     public ResponseEntity<ExpenseResponse> getExpenseById(
@@ -95,9 +100,9 @@ public class ExpenseController {
             description = "Returns all expenses belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Filtering criteria is invalid"),
-            @ApiResponse(responseCode = "404", description = "Category not found")
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Filtering criteria is invalid", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public ResponseEntity<List<ExpenseResponse>> getExpenses(
@@ -122,8 +127,8 @@ public class ExpenseController {
              description = "Returns the authenticated user's expenses that match the specified search criteria."
     )
     @ApiResponses({
-             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully"),
-             @ApiResponse(responseCode = "404", description = "Category not found")
+             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/search")
     public ResponseEntity<List<ExpenseResponse>> searchExpenses (
@@ -153,9 +158,9 @@ public class ExpenseController {
             description = "Updates the specified expense belonging to the authenticated user with the provided data."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expense updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid expense data"),
-            @ApiResponse(responseCode = "404", description = "Expense or category not found")
+            @ApiResponse(responseCode = "200", description = "Expense updated successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid expense data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Expense or category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{expenseId}")
     public ResponseEntity<ExpenseResponse> updateExpense(
@@ -179,8 +184,8 @@ public class ExpenseController {
             description = "Deletes the specified expense belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Expense deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Expense not found")
+            @ApiResponse(responseCode = "204", description = "Expense deleted successfully", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{expenseId}")
     public ResponseEntity<Void> deleteExpense(

@@ -1,5 +1,7 @@
 package com.project.expensemanager.controller;
 
+import com.project.expensemanager.dto.error.ErrorResponse;
+import com.project.expensemanager.dto.expense.ExpenseResponse;
 import com.project.expensemanager.dto.recurringexpense.RecurringExpenseRequest;
 import com.project.expensemanager.dto.recurringexpense.RecurringExpenseResponse;
 import com.project.expensemanager.entity.Category;
@@ -11,8 +13,11 @@ import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.RecurringExpenseService;
 import com.project.expensemanager.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
 @RestController
 @RequestMapping("/api/recurring-expenses")  // Base URL
@@ -46,9 +52,9 @@ public class RecurringExpenseController {
             description = "Creates a new recurring expense for the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Recurring expense created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid recurring expense data"),
-            @ApiResponse(responseCode = "404", description = "Category not found")
+            @ApiResponse(responseCode = "201", description = "Recurring expense created successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid recurring expense data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<RecurringExpenseResponse> createRecurringExpense(
@@ -71,9 +77,9 @@ public class RecurringExpenseController {
             description = "Updates the specified recurring expense belonging to the authenticated user with the provided data."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid recurring expense data"),
-            @ApiResponse(responseCode = "404", description = "Recurring expense or category not found")
+            @ApiResponse(responseCode = "200", description = "Recurring expense updated successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid recurring expense data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Recurring expense or category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{recurringExpenseId}")
     public ResponseEntity<RecurringExpenseResponse> updateRecurringExpense(
@@ -97,7 +103,7 @@ public class RecurringExpenseController {
             description = "Returns all recurring expenses belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class)))
     })
     @GetMapping
     public ResponseEntity<List<RecurringExpenseResponse>> getAllRecurringExpenses(
@@ -117,8 +123,8 @@ public class RecurringExpenseController {
             description = "Returns the specified recurring expense belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Recurring expense not found"),
+            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Recurring expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/{recurringExpenseId}")
     public ResponseEntity<RecurringExpenseResponse> getExpenseById(
@@ -139,8 +145,8 @@ public class RecurringExpenseController {
             description = "Returns the authenticated user's recurring expenses that match the specified search criteria."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Category not found"),
+            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/search")
     public ResponseEntity<List<RecurringExpenseResponse>> searchRecurringExpenses (
@@ -168,8 +174,8 @@ public class RecurringExpenseController {
             description = "Returns the authenticated user's recurring expenses that match the specified filter criteria."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid filtering criteria"),
+            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid filtering criteria", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/filter")
     public ResponseEntity<List<RecurringExpenseResponse>> filterRecurringExpenses (
@@ -192,8 +198,8 @@ public class RecurringExpenseController {
             description = "Deletes the specified recurring expense belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Recurring expense deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Recurring expense not found"),
+            @ApiResponse(responseCode = "204", description = "Recurring expense deleted successfully", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Recurring expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @DeleteMapping("/{recurringExpenseId}")
     public ResponseEntity<Void> deleteRecurringExpense(

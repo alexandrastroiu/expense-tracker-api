@@ -3,10 +3,13 @@ package com.project.expensemanager.controller;
 import com.project.expensemanager.dto.auth.LoginRequest;
 import com.project.expensemanager.dto.auth.LoginResponse;
 import com.project.expensemanager.dto.auth.RegisterRequest;
+import com.project.expensemanager.dto.error.ErrorResponse;
 import com.project.expensemanager.entity.User;
 import com.project.expensemanager.mapper.UserMapper;
 import com.project.expensemanager.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,8 +39,8 @@ public class AuthController {
             description = "Creates a new user account using the provided username, email, and password."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Registration successful"),
-            @ApiResponse(responseCode = "409", description = "Username or Email already used")
+            @ApiResponse(responseCode = "201", description = "Registration successful", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Username or Email already used", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/register")
     public ResponseEntity<Void> register(
@@ -54,8 +57,8 @@ public class AuthController {
             description = "Authenticates a user using their username and password and returns a JWT token."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Authentication successful"),
-            @ApiResponse(responseCode = "401", description = "Invalid username or password")
+            @ApiResponse(responseCode = "200", description = "Authentication successful", content = @Content(schema = @Schema(implementation = LoginResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid username or password", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(

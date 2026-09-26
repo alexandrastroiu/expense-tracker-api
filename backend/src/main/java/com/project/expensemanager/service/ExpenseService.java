@@ -105,11 +105,11 @@ public class ExpenseService {
             }
 
             if (start != null) {
-                return expenseRepository.findByUserAndCategoryAndExpenseDateAfter(user, selectedCategory, start);
+                return expenseRepository.findByUserAndCategoryAndExpenseDateGreaterThanEqual(user, selectedCategory, start);
             }
 
             if (end != null) {
-                return expenseRepository.findByUserAndCategoryAndExpenseDateBefore(user, selectedCategory, end);
+                return expenseRepository.findByUserAndCategoryAndExpenseDateLessThanEqual(user, selectedCategory, end);
             }
 
             if ( minAmount != null && maxAmount != null) {
@@ -132,11 +132,11 @@ public class ExpenseService {
             }
 
             if (start != null) {
-                return expenseRepository.findByUserAndExpenseDateAfter(user, start);
+                return expenseRepository.findByUserAndExpenseDateGreaterThanEqual(user, start);
             }
 
             if (end != null) {
-                return expenseRepository.findByUserAndExpenseDateBefore(user, end);
+                return expenseRepository.findByUserAndExpenseDateLessThanEqual(user, end);
             }
 
             if (minAmount != null && maxAmount != null) {

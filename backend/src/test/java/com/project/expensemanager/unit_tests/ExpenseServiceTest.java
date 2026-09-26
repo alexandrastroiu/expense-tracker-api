@@ -244,10 +244,10 @@ public class ExpenseServiceTest {
         List<Expense> expected = List.of(expenses.getFirst());
 
         when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(expenseRepository.findByUserAndCategoryAndExpenseDateAfter(user,category, date)).thenReturn(expected);
+        when(expenseRepository.findByUserAndCategoryAndExpenseDateGreaterThanEqual(user,category, date)).thenReturn(expected);
         List<Expense> result = expenseService.filterExpenses(user, category.getId(), null, null, date, null);
         assertSame(expected, result);
-        verify(expenseRepository).findByUserAndCategoryAndExpenseDateAfter(user,category, date);
+        verify(expenseRepository).findByUserAndCategoryAndExpenseDateGreaterThanEqual(user,category, date);
     }
 
     @Test

@@ -24,13 +24,14 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
-    // Security rules
+    // Hash passwords using BCrypt
 
     @Bean
     public PasswordEncoder passwordEncoder() {
             return new BCryptPasswordEncoder();
     }
 
+    // Security rules
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)

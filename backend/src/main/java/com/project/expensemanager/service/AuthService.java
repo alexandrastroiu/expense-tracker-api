@@ -1,6 +1,7 @@
 package com.project.expensemanager.service;
 
 import com.project.expensemanager.entity.User;
+import com.project.expensemanager.exception.InvalidRequestException;
 import com.project.expensemanager.exception.UserExistsException;
 import com.project.expensemanager.repository.UserRepository;
 import com.project.expensemanager.security.JWTService;
@@ -12,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class AuthService {
@@ -35,6 +38,11 @@ public class AuthService {
 
         if(userRepository.existsByEmail(user.getEmail())) {
             throw new UserExistsException("Email is already registered.");
+        }
+
+        // BCrypt passwords have a maximum length of 72 bytes
+        if (rawPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new InvalidRequestException("Password must be at most 72 bytes in UTF-8.");
         }
 
         // Store hashed password

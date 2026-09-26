@@ -25,7 +25,7 @@ import java.util.List;
 
 @Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
 @RestController
-@RequestMapping("/api/recurringexpenses")  // Base URL
+@RequestMapping("/api/recurring-expenses")  // Base URL
 public class RecurringExpenseController {
 
     private final UserService userService;

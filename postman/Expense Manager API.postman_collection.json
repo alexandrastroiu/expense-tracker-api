@@ -35,7 +35,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user123\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -63,8 +63,15 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 409\", function () {",
+                  "pm.test(\"Duplicate email returns 409\", function () {",
                   "    pm.response.to.have.status(409);",
+                  "",
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.error).to.eql(\"Conflict\");",
+                  "    pm.expect(response.message).to.eql(",
+                  "        \"Email is already registered.\"",
+                  "    );",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -81,7 +88,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user123\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user1\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -109,8 +116,15 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 409\", function () {",
+                  "pm.test(\"Duplicate username returns 409\", function () {",
                   "    pm.response.to.have.status(409);",
+                  "",
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.error).to.eql(\"Conflict\");",
+                  "    pm.expect(response.message).to.eql(",
+                  "        \"Username is already registered.\"",
+                  "    );",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -127,7 +141,61 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user123\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Password is shorter than minimum length",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error is Bad Request\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"Bad Request\");",
+                  "});",
+                  "",
+                  "pm.test(\"Message contains password requirement\", function () {",
+                  "    pm.expect(pm.response.json().message).to.include(\"password: Password must have at least 8\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{    \"username\": \"test_user\",\n     \"firstName\": \"John\",\n     \"lastName\": \"Smith\",\n     \"password\": \"user\",\n     \"email\": \"johnsmith@gmail.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -177,7 +245,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"user123\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"user1234!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -199,7 +267,60 @@
           "response": []
         },
         {
-          "name": "Invalid username or password",
+          "name": "Login with valid credentials and invalid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Can log in when the request carries an invalid token\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().token).to.be.a(\"string\").and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer abc",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"user1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Wrong user password",
           "event": [
             {
               "listen": "test",
@@ -225,7 +346,55 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"1\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"password\": \"12345pass\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unknown username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.expect(pm.response.json().message).to.eql(\"Bad credentials\");"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"user\",\n    \"password\": \"user1234!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -356,48 +525,27 @@
                   "});",
                   "",
                   "pm.test(\"Default categories are correct\", function () {",
-                  "    pm.response.to.have.jsonBody([",
-                  "    {",
-                  "        \"id\": 1,",
-                  "        \"categoryName\": \"Utilities\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 2,",
-                  "        \"categoryName\": \"Groceries\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 3,",
-                  "        \"categoryName\": \"Entertainment\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 4,",
-                  "        \"categoryName\": \"Transportation\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 5,",
-                  "        \"categoryName\": \"Healthcare\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 6,",
-                  "        \"categoryName\": \"Education\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 7,",
-                  "        \"categoryName\": \"Personal Care\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 8,",
-                  "        \"categoryName\": \"Insurance\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 9,",
-                  "        \"categoryName\": \"Savings\"",
-                  "    },",
-                  "    {",
-                  "        \"id\": 10,",
-                  "        \"categoryName\": \"Others\"",
-                  "    }",
-                  "])});"
+                  "    const categories = pm.response.json();",
+                  "",
+                  "    const actualNames = categories",
+                  "        .map(category => category.categoryName)",
+                  "        .sort();",
+                  "",
+                  "    const expectedNames = [",
+                  "        \"Utilities\",",
+                  "        \"Groceries\",",
+                  "        \"Entertainment\",",
+                  "        \"Transportation\",",
+                  "        \"Healthcare\",",
+                  "        \"Education\",",
+                  "        \"Personal Care\",",
+                  "        \"Insurance\",",
+                  "        \"Savings\",",
+                  "        \"Others\"",
+                  "    ].sort();",
+                  "",
+                  "    pm.expect(actualNames).to.eql(expectedNames);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -725,6 +873,64 @@
           "response": []
         },
         {
+          "name": "Request with malformed JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Malformed JSON returns 400\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Groceries\",\n    \"description\": \"Weekly groceries\",\n    \"amount\": 125.50,\n    \"categoryId\": 1,\n    \"expenseDate\": \"2026-08-07\"\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "expenses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Get Expense by ID",
           "event": [
             {
@@ -761,9 +967,10 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
@@ -791,12 +998,12 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "const response = pm.response.json();",
+                  "const expenses = pm.response.json().content;",
                   "",
                   "pm.test(\"Expense title is correct\", function () {",
-                  "    pm.expect(response[0].title).to.eql(\"Groceries\");",
-                  "});",
-                  ""
+                  "    pm.expect(expenses).to.have.lengthOf(1);",
+                  "    pm.expect(expenses[0].title).to.eql(\"Groceries\");",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -818,9 +1025,10 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
@@ -874,19 +1082,21 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/expenses?categoryId=1&minAmount=100&maxAmount=150&start=2026-08-03&end=2026-08-07",
+              "raw": "{{baseUrl}}/api/expenses/filter?categoryId=1&minAmount=100&maxAmount=150&start=2026-08-03&end=2026-08-07",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "expenses"
+                "expenses",
+                "filter"
               ],
               "query": [
                 {
@@ -949,13 +1159,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/expenses?categoryId=1&minAmount=100&maxAmount=15&start=2026-08-03&end=2026-08-07",
+              "raw": "{{baseUrl}}/api/expenses/filter?categoryId=1&minAmount=100&maxAmount=15&start=2026-08-03&end=2026-08-07",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "expenses"
+                "expenses",
+                "filter"
               ],
               "query": [
                 {
@@ -994,8 +1205,13 @@
                   "    pm.response.to.have.status(400);",
                   "});",
                   "",
-                  "pm.test(\"Error message is correct\", function () {",
-                  "    pm.expect(pm.response.json().error).to.eql(\"Bad Request\");",
+                  "pm.test(\"Error identifies the invalid date range\", function () {",
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.error).to.eql(\"Bad Request\");",
+                  "    pm.expect(response.message).to.eql(",
+                  "        \"End date cannot be before start date.\"",
+                  "    );",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1018,13 +1234,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/expenses?categoryId=1&minAmount=100&maxAmount=15&start=2026-08-03&end=2026-08-01",
+              "raw": "{{baseUrl}}/api/expenses/filter?categoryId=1&minAmount=100&maxAmount=15&start=2026-08-03&end=2026-08-01",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "expenses"
+                "expenses",
+                "filter"
               ],
               "query": [
                 {
@@ -1046,6 +1263,130 @@
                 {
                   "key": "end",
                   "value": "2026-08-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by date after",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Expenses are on or after the start date\", function () {",
+                  "    const expenses = pm.response.json().content;",
+                  "    const expenseId = Number(pm.environment.get(\"expenseId\"));",
+                  "",
+                  "    pm.expect(expenses).to.be.an(\"array\").and.not.empty;",
+                  "    pm.expect(expenses.map(expense => expense.id)).to.include(expenseId);",
+                  "",
+                  "    expenses.forEach(expense => {",
+                  "        pm.expect(expense.expenseDate >= \"2026-08-07\").to.eql(true);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/filter?start=2026-08-07",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "expenses",
+                "filter"
+              ],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "2026-08-07"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by date before",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Expenses are on or before the end date\", function () {",
+                  "    const expenses = pm.response.json().content;",
+                  "    const expenseId = Number(pm.environment.get(\"expenseId\"));",
+                  "",
+                  "    pm.expect(expenses).to.be.an(\"array\").and.not.empty;",
+                  "    pm.expect(expenses.map(expense => expense.id)).to.include(expenseId);",
+                  "",
+                  "    expenses.forEach(expense => {",
+                  "        pm.expect(expense.expenseDate <= \"2026-08-07\").to.eql(true);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/filter?end=2026-08-07",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "expenses",
+                "filter"
+              ],
+              "query": [
+                {
+                  "key": "end",
+                  "value": "2026-08-07"
                 }
               ]
             }
@@ -1228,25 +1569,22 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201\", function () {",
+                  "pm.test(\"Status code is 201 and recurring expense is correct\", function () {",
                   "    pm.response.to.have.status(201);",
-                  "});",
                   "",
-                  "const response = pm.response.json();",
+                  "    const response = pm.response.json();",
                   "",
-                  "pm.environment.set(\"recurringExpenseId\", response.id);",
+                  "    pm.expect(response.id).to.be.a(\"number\");",
+                  "    pm.expect(response.title).to.eql(\"Netflix subscription\");",
+                  "    pm.expect(response.description).to.eql(\"Monthly Netflix subscription\");",
+                  "    pm.expect(Number(response.amount)).to.eql(5.99);",
+                  "    pm.expect(response.categoryId).to.eql(3);",
+                  "    pm.expect(response.startDate).to.eql(\"2026-08-07\");",
+                  "    pm.expect(response.endDate).to.eql(\"2026-12-07\");",
+                  "    pm.expect(response.frequency).to.eql(\"MONTHLY\");",
                   "",
-                  "pm.test(\"Response body contains the correct expense details\", function () {",
-                  "    pm.response.to.have.jsonBody({",
-                  "    \"id\": 3,",
-                  "    \"title\": \"Netflix subscription\",",
-                  "    \"description\": \"Monthly Netflix subscription\",",
-                  "    \"amount\": 5.99,",
-                  "    \"categoryId\": 3,",
-                  "    \"startDate\": \"2026-08-07\",",
-                  "    \"endDate\": \"2026-12-07\",",
-                  "    \"frequency\": \"MONTHLY\"",
-                  "});})"
+                  "    pm.environment.set(\"recurringExpenseId\", response.id);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1283,20 +1621,20 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses",
+              "raw": "{{baseUrl}}/api/recurring-expenses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses"
+                "recurring-expenses"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Invalid create request",
+          "name": "Invalid date create request",
           "event": [
             {
               "listen": "test",
@@ -1339,13 +1677,70 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses",
+              "raw": "{{baseUrl}}/api/recurring-expenses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses"
+                "recurring-expenses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid frequency create request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Invalid frequency returns 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "",
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.status).to.eql(400);",
+                  "    pm.expect(response.error).to.eql(\"Bad Request\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Netflix subscription\",\n    \"description\": \"Monthly Netflix subscription\",\n    \"amount\": 5.99,\n    \"categoryId\": 3,\n    \"startDate\": \"2026-12-07\",\n    \"endDate\": \"2026-12-08\",\n    \"frequency\": \"BIWEEKLY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recurring-expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "recurring-expenses"
               ]
             }
           },
@@ -1358,8 +1753,15 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 400\", function () {",
+                  "pm.test(\"Invalid amount returns 400\", function () {",
                   "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error identifies the invalid amount\", function () {",
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.error).to.eql(\"Bad Request\");",
+                  "    pm.expect(response.message).to.include(\"amount:\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1391,13 +1793,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses",
+              "raw": "{{baseUrl}}/api/recurring-expenses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses"
+                "recurring-expenses"
               ]
             }
           },
@@ -1440,19 +1842,20 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/{{recurringExpenseId}}",
+              "raw": "{{baseUrl}}/api/recurring-expenses/{{recurringExpenseId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "{{recurringExpenseId}}"
               ]
             }
@@ -1466,8 +1869,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () { ",
+                  "pm.test(\"Status is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const page = pm.response.json();",
+                  "",
+                  "pm.test(\"Recurring expenses are returned\", function () {",
+                  "    pm.expect(page.content).to.be.an(\"array\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1490,19 +1899,20 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses",
+              "raw": "{{baseUrl}}/api/recurring-expenses",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses"
+                "recurring-expenses"
               ]
             }
           },
@@ -1515,8 +1925,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Response status code is 200\", function () {",
+                  "pm.test(\"Status is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const page = pm.response.json();",
+                  "",
+                  "pm.test(\"Recurring expenses are returned\", function () {",
+                  "    pm.expect(page.content).to.be.an(\"array\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1539,19 +1955,20 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/search?title=Netflix subscription",
+              "raw": "{{baseUrl}}/api/recurring-expenses/search?title=Netflix subscription",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "search"
               ],
               "query": [
@@ -1571,8 +1988,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Response status code is 200\", function () {",
+                  "pm.test(\"Status is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const page = pm.response.json();",
+                  "",
+                  "pm.test(\"Recurring expenses are returned\", function () {",
+                  "    pm.expect(page.content).to.be.an(\"array\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -1595,19 +2018,20 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
+                "key": "",
+                "value": "",
+                "type": "text",
+                "disabled": true
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/filter?minAmount=2&maxAmount=10",
+              "raw": "{{baseUrl}}/api/recurring-expenses/filter?minAmount=2&maxAmount=10",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "filter"
               ],
               "query": [
@@ -1659,13 +2083,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/filter?minAmount=10&maxAmount=2",
+              "raw": "{{baseUrl}}/api/recurring-expenses/filter?minAmount=10&maxAmount=2",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "filter"
               ],
               "query": [
@@ -1689,9 +2113,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status is 200\"), function () {",
+                  "pm.test(\"Status is 200\", function () {",
                   "    pm.response.to.have.status(200);",
-                  "};"
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1728,13 +2152,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/{{recurringExpenseId}}",
+              "raw": "{{baseUrl}}/api/recurring-expenses/{{recurringExpenseId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "{{recurringExpenseId}}"
               ]
             }
@@ -1748,21 +2172,24 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () { ",
+                  "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
                   "pm.test(\"Recurring expense updated successfully\", function () {",
-                  "    pm.response.to.have.jsonBody({",
-                  "    \"id\": 5,",
-                  "    \"title\": \"Updated recurring expense\",",
-                  "    \"description\": \"Monthly Netflix subscription\",",
-                  "    \"amount\": 13.99,",
-                  "    \"categoryId\": 3,",
-                  "    \"startDate\": \"2026-08-07\",",
-                  "    \"endDate\": \"2026-12-07\",",
-                  "    \"frequency\": \"MONTHLY\"",
-                  "});})"
+                  "    const response = pm.response.json();",
+                  "",
+                  "    pm.expect(response.id).to.eql(",
+                  "        Number(pm.environment.get(\"recurringExpenseId\"))",
+                  "    );",
+                  "    pm.expect(response.title).to.eql(\"Updated recurring expense\");",
+                  "    pm.expect(response.description).to.eql(\"Monthly Netflix subscription\");",
+                  "    pm.expect(response.amount).to.eql(13.99);",
+                  "    pm.expect(response.categoryId).to.eql(3);",
+                  "    pm.expect(response.startDate).to.eql(\"2026-08-07\");",
+                  "    pm.expect(response.endDate).to.eql(\"2026-12-07\");",
+                  "    pm.expect(response.frequency).to.eql(\"MONTHLY\");",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -1790,13 +2217,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/{{recurringExpenseId}}",
+              "raw": "{{baseUrl}}/api/recurring-expenses/{{recurringExpenseId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "{{recurringExpenseId}}"
               ]
             }
@@ -1840,13 +2267,13 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/recurringexpenses/{{recurringExpenseId}}",
+              "raw": "{{baseUrl}}/api/recurring-expenses/{{recurringExpenseId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "recurringexpenses",
+                "recurring-expenses",
                 "{{recurringExpenseId}}"
               ]
             }
@@ -1869,16 +2296,17 @@
                   "    pm.response.to.have.status(201);",
                   "});",
                   "",
-                  "const response = pm.response.json();",
+                  "pm.test(\"Created budget has the correct details\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "",
-                  "pm.environment.set(\"budgetId\", response.id);",
+                  "    const response = pm.response.json();",
                   "",
-                  "pm.test(\"Response body is correct\", function () {",
-                  "    pm.response.to.have.jsonBody({",
-                  "    \"id\": 1,",
-                  "    \"amount\": 100,",
-                  "    \"budgetPeriod\": \"2026-08-01\"",
-                  "});})"
+                  "    pm.expect(response.id).to.be.a(\"number\");",
+                  "    pm.expect(Number(response.amount)).to.eql(100);",
+                  "    pm.expect(response.budgetPeriod).to.eql(\"2026-08-01\");",
+                  "",
+                  "    pm.environment.set(\"budgetId\", response.id);",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},

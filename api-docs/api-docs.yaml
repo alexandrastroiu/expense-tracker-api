@@ -17,7 +17,7 @@ tags:
 - name: Recurring Expenses
   description: Manage user recurring expenses
 paths:
-  /api/recurringexpenses/{recurringExpenseId}:
+  /api/recurring-expenses/{recurringExpenseId}:
     get:
       tags:
       - Recurring Expenses
@@ -44,7 +44,11 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     put:
       tags:
       - Recurring Expenses
@@ -77,13 +81,17 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Recurring expense or category not found
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - Recurring Expenses
@@ -103,6 +111,14 @@ paths:
           description: Recurring expense deleted successfully
         "404":
           description: Recurring expense not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/expenses/{expenseId}:
     get:
       tags:
@@ -129,7 +145,11 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     put:
       tags:
       - Expenses
@@ -162,13 +182,17 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Expense or category not found
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - Expenses
@@ -187,6 +211,14 @@ paths:
           description: Expense deleted successfully
         "404":
           description: Expense not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/budgets/{budgetId}:
     get:
       tags:
@@ -213,7 +245,11 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     put:
       tags:
       - Budgets
@@ -246,19 +282,23 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Budget not found
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: A different budget already exists for this month
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     delete:
       tags:
       - Budgets
@@ -278,22 +318,61 @@ paths:
             user
         "404":
           description: Budget not found
-  /api/recurringexpenses:
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
+  /api/recurring-expenses:
     get:
       tags:
       - Recurring Expenses
       summary: Get all recurring expenses
       description: Returns all recurring expenses belonging to the authenticated user.
       operationId: getAllRecurringExpenses
+      parameters:
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          default:
+          - "startDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
       responses:
         "200":
-          description: Recurring expense retrieved successfully
+          description: Recurring expenses retrieved successfully
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/PageRecurringExpenseResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     post:
       tags:
       - Recurring Expenses
@@ -318,74 +397,64 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Category not found
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/expenses:
     get:
       tags:
       - Expenses
       summary: Get all expenses
       description: Returns all expenses belonging to the authenticated user.
-      operationId: getExpenses
+      operationId: getAllRecurringExpenses_1
       parameters:
-      - name: categoryId
+      - name: page
         in: query
+        description: Zero-based page index (0..N)
         required: false
         schema:
           type: integer
-          format: int32
-      - name: minAmount
+          default: 0
+          minimum: 0
+      - name: size
         in: query
+        description: The size of the page to be returned
         required: false
         schema:
-          type: number
-      - name: maxAmount
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
         in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
         required: false
         schema:
-          type: number
-      - name: start
-        in: query
-        required: false
-        schema:
-          type: string
-          format: date
-      - name: end
-        in: query
-        required: false
-        schema:
-          type: string
-          format: date
+          type: array
+          default:
+          - "expenseDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
       responses:
         "200":
           description: Expenses retrieved successfully
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseResponse"
-        "400":
-          description: Filtering criteria is invalid
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseResponse"
-        "404":
-          description: Category not found
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/PageExpenseResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     post:
       tags:
       - Expenses
@@ -410,13 +479,17 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Category not found
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/budgets:
     get:
       tags:
@@ -444,7 +517,11 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
     post:
       tags:
       - Budgets
@@ -470,13 +547,17 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: A budget already exists for the specified period
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/auth/register:
     post:
       tags:
@@ -492,10 +573,20 @@ paths:
               $ref: "#/components/schemas/RegisterRequest"
         required: true
       responses:
-        "200":
+        "201":
           description: Registration successful
         "409":
           description: Username or Email already used
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Invalid request data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/auth/login:
     post:
       tags:
@@ -522,8 +613,14 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/LoginResponse"
-  /api/recurringexpenses/search:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Invalid request data
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/recurring-expenses/search:
     get:
       tags:
       - Recurring Expenses
@@ -553,24 +650,52 @@ paths:
         schema:
           type: integer
           format: int32
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          default:
+          - "startDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
       responses:
         "200":
           description: Recurring expenses retrieved successfully
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/PageRecurringExpenseResponse"
         "404":
           description: Category not found
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecurringExpenseResponse"
-  /api/recurringexpenses/filter:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
+  /api/recurring-expenses/filter:
     get:
       tags:
       - Recurring Expenses
@@ -589,23 +714,51 @@ paths:
         required: true
         schema:
           type: number
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          default:
+          - "startDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
       responses:
         "200":
           description: Recurring expense retrieved successfully
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/PageRecurringExpenseResponse"
         "400":
           description: Invalid filtering criteria
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecurringExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/expenses/search:
     get:
       tags:
@@ -637,23 +790,139 @@ paths:
         schema:
           type: integer
           format: int32
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          default:
+          - "expenseDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
       responses:
         "200":
           description: Expenses retrieved successfully
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/PageExpenseResponse"
         "404":
           description: Category not found
           content:
             '*/*':
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
+  /api/expenses/filter:
+    get:
+      tags:
+      - Expenses
+      summary: Filter expenses
+      description: Returns  expenses belonging to the authenticated user filtered
+        by criteria.
+      operationId: filterExpenses
+      parameters:
+      - name: categoryId
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+      - name: minAmount
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: maxAmount
+        in: query
+        required: false
+        schema:
+          type: number
+      - name: start
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: end
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema:
+          type: integer
+          default: 20
+          minimum: 1
+      - name: sort
+        in: query
+        description: "Sorting criteria in the format: property,(asc|desc). Default\
+          \ sort order is ascending. Multiple sort criteria are supported."
+        required: false
+        schema:
+          type: array
+          default:
+          - "expenseDate,DESC"
+          - "id,DESC"
+          items:
+            type: string
+      responses:
+        "200":
+          description: Expenses retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageExpenseResponse"
+        "400":
+          description: Filtering criteria is invalid
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Category not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/categories:
     get:
       tags:
@@ -670,6 +939,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CategoryResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/budgets/summary:
     get:
       tags:
@@ -697,7 +970,11 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/BudgetSummaryResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
 components:
   schemas:
     RecurringExpenseRequest:
@@ -709,9 +986,15 @@ components:
           minLength: 0
         description:
           type: string
+          maxLength: 500
+          minLength: 0
         amount:
           type: number
-          exclusiveMinimum: 0
+          description: Positive amount with at most 7 integer digits and 2 decimal
+            places.
+          maximum: 9999999.99
+          minimum: 0.01
+          multipleOf: 0.01
         categoryId:
           type: integer
           format: int32
@@ -762,6 +1045,19 @@ components:
           - WEEKLY
           - MONTHLY
           - YEARLY
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          format: int32
+        error:
+          type: string
+        message:
+          type: string
     ExpenseRequest:
       type: object
       properties:
@@ -771,9 +1067,15 @@ components:
           minLength: 0
         description:
           type: string
+          maxLength: 500
+          minLength: 0
         amount:
           type: number
-          exclusiveMinimum: 0
+          description: Positive amount with at most 7 integer digits and 2 decimal
+            places.
+          maximum: 9999999.99
+          minimum: 0.01
+          multipleOf: 0.01
         categoryId:
           type: integer
           format: int32
@@ -808,7 +1110,11 @@ components:
       properties:
         amount:
           type: number
-          exclusiveMinimum: 0
+          description: Positive amount with at most 7 integer digits and 2 decimal
+            places.
+          maximum: 9999999.99
+          minimum: 0.01
+          multipleOf: 0.01
         budgetPeriod:
           type: string
           format: date
@@ -843,10 +1149,13 @@ components:
           minLength: 0
         password:
           type: string
+          description: At least 8 characters and at most 72 bytes in UTF-8.
           maxLength: 255
-          minLength: 0
+          minLength: 8
+          writeOnly: true
         email:
           type: string
+          format: email
           maxLength: 100
           minLength: 0
       required:
@@ -865,7 +1174,8 @@ components:
         password:
           type: string
           maxLength: 255
-          minLength: 0
+          minLength: 8
+          writeOnly: true
       required:
       - password
       - username
@@ -874,6 +1184,97 @@ components:
       properties:
         token:
           type: string
+    PageRecurringExpenseResponse:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecurringExpenseResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    PageExpenseResponse:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
     CategoryResponse:
       type: object
       properties:
@@ -903,3 +1304,8 @@ components:
           type: number
         budgetPercentage:
           type: number
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

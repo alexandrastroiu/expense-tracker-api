@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,6 +33,11 @@ import java.math.BigDecimal;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
+@ApiResponse(
+        responseCode = "401",
+        description = "Missing, invalid, or expired bearer token",
+        content = @Content
+)
 @RestController
 @RequestMapping("/api/recurring-expenses")  // Base URL
 public class RecurringExpenseController {
@@ -106,15 +112,12 @@ public class RecurringExpenseController {
             description = "Returns all recurring expenses belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Recurring expenses retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))
-            )
+            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully", useReturnTypeSchema = true)
     })
     @GetMapping
     public ResponseEntity<Page<RecurringExpenseResponse>> getAllRecurringExpenses(
             Authentication authentication,
+            @ParameterObject
             @PageableDefault(
                     size = 20,
                     sort = {"startDate", "id"},
@@ -158,7 +161,7 @@ public class RecurringExpenseController {
             description = "Returns the authenticated user's recurring expenses that match the specified search criteria."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully",  useReturnTypeSchema = true),
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/search")
@@ -167,6 +170,7 @@ public class RecurringExpenseController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) Frequency frequency,
             @RequestParam(required = false) Integer categoryId,
+            @ParameterObject
             @PageableDefault(
                     size = 20,
                     sort = {"startDate", "id"},
@@ -194,7 +198,7 @@ public class RecurringExpenseController {
             description = "Returns the authenticated user's recurring expenses that match the specified filter criteria."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "400", description = "Invalid filtering criteria", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/filter")
@@ -202,6 +206,7 @@ public class RecurringExpenseController {
             Authentication authentication,
             @RequestParam BigDecimal minAmount,
             @RequestParam BigDecimal maxAmount,
+            @ParameterObject
             @PageableDefault(
                     size = 20,
                     sort = {"startDate", "id"},

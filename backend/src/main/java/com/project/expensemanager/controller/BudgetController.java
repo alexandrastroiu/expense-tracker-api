@@ -28,6 +28,11 @@ import java.time.LocalDate;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Budgets", description = "Manage user budgets")
+@ApiResponse(
+        responseCode = "401",
+        description = "Missing, invalid, or expired bearer token",
+        content = @Content
+)
 @RestController
 @RequestMapping("/api/budgets")    // Base URL
 public class BudgetController {
@@ -115,7 +120,7 @@ public class BudgetController {
             description = "Returns a summary of the authenticated user's budget and expenses for the specified budget period."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Budget summary retrieved successfully", content = @Content(schema = @Schema(implementation = BudgetResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Budget summary retrieved successfully", content = @Content(schema = @Schema(implementation = BudgetSummaryResponse.class))),
             @ApiResponse(responseCode = "404", description = "Budget not found for the specified period", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
    @GetMapping("/summary")

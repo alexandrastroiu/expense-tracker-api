@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,6 +33,11 @@ import java.time.LocalDate;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Expenses", description = "Manage user expenses")
+@ApiResponse(
+        responseCode = "401",
+        description = "Missing, invalid, or expired bearer token",
+        content = @Content
+)
 @RestController
 @RequestMapping("/api/expenses")        // Base URL
 public class ExpenseController {
@@ -82,11 +88,12 @@ public class ExpenseController {
             description = "Returns all expenses belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Eexpenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", useReturnTypeSchema = true)
     })
     @GetMapping
     public ResponseEntity<Page<ExpenseResponse>> getAllRecurringExpenses(
             Authentication authentication,
+            @ParameterObject
             @PageableDefault(
                     size = 20,
                     sort = {"expenseDate", "id"},
@@ -130,7 +137,7 @@ public class ExpenseController {
             description = "Returns  expenses belonging to the authenticated user filtered by criteria."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully",  useReturnTypeSchema = true),
             @ApiResponse(responseCode = "400", description = "Filtering criteria is invalid", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -142,6 +149,7 @@ public class ExpenseController {
             @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(required = false) LocalDate start,
             @RequestParam(required = false) LocalDate end,
+            @ParameterObject
             @PageableDefault(
                     size = 20,
                     sort = {"expenseDate", "id"},
@@ -163,7 +171,7 @@ public class ExpenseController {
              description = "Returns the authenticated user's expenses that match the specified search criteria."
     )
     @ApiResponses({
-             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", useReturnTypeSchema = true),
              @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/search")
@@ -173,6 +181,7 @@ public class ExpenseController {
         @RequestParam(required = false) LocalDate expenseDate,
         @RequestParam(required = false) BigDecimal amount,
         @RequestParam(required = false) Integer categoryId,
+        @ParameterObject
         @PageableDefault(
                 size = 20,
                 sort = {"expenseDate", "id"},

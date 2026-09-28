@@ -22,6 +22,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Authentication", description = "Authentication")
+@ApiResponse(
+        responseCode = "400",
+        description = "Invalid request data",
+        content = @Content(
+                schema = @Schema(implementation = ErrorResponse.class)
+        )
+)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

@@ -21,6 +21,11 @@ import java.util.List;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Categories", description = "Expense Categories")
+@ApiResponse(
+        responseCode = "401",
+        description = "Missing, invalid, or expired bearer token",
+        content = @Content
+)
 @RestController
 @RequestMapping("/api/categories")   // Base URL
 public class CategoryController {
@@ -38,7 +43,7 @@ public class CategoryController {
             description = "Get all the expense categories."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Categories retrieved successfully", content = @Content(schema = @Schema(implementation = CategoryResponse.class)))
+            @ApiResponse(responseCode = "200", description = "Categories retrieved successfully",  useReturnTypeSchema = true)
     })
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {

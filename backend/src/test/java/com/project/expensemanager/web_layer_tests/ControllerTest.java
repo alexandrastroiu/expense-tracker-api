@@ -34,6 +34,8 @@ import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// Controller tests
+
 @WebMvcTest({
         ExpenseController.class,
         RecurringExpenseController.class
@@ -46,7 +48,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(username = "alice", authorities = "USER")
 class ControllerTest {
 
-    @Autowired MockMvc mvc;
+    @Autowired
+    MockMvc mvc;
 
     @MockitoBean ExpenseService expenseService;
     @MockitoBean RecurringExpenseService recurringExpenseService;
@@ -72,18 +75,25 @@ class ControllerTest {
 
     static Stream<MockHttpServletRequestBuilder> badRequests() {
         return Stream.of(
+                // The recurring filter requires both amount bounds.
                 get("/api/recurring-expenses/filter")
                         .param("maxAmount", "5"),
-                get("/api/expenses")
+
+                get("/api/expenses/filter")
                         .param("start", "not-a-date"),
-                get("/api/expenses")
+
+                get("/api/expenses/filter")
                         .param("minAmount", "not-a-number"),
+
                 get("/api/expenses/not-an-integer"),
+
                 post("/api/expenses")
                         .contentType(APPLICATION_JSON)
                         .content("{"),
+
                 post("/api/expenses")
                         .contentType(APPLICATION_JSON),
+
                 post("/api/recurring-expenses")
                         .contentType(APPLICATION_JSON)
                         .content("""
@@ -135,10 +145,8 @@ class ControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message",
-                        containsString("title:")))
-                .andExpect(jsonPath("$.message",
-                        containsString("amount:")));
+                .andExpect(jsonPath("$.message", containsString("title:")))
+                .andExpect(jsonPath("$.message", containsString("amount:")));
 
         verifyNoBusinessCalls();
     }

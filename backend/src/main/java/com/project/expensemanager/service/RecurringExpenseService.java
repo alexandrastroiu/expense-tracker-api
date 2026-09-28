@@ -8,11 +8,18 @@ import com.project.expensemanager.exception.InvalidRequestException;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.CategoryRepository;
 import com.project.expensemanager.repository.RecurringExpenseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+
 
 @Service
 public class RecurringExpenseService {
@@ -73,29 +80,90 @@ public class RecurringExpenseService {
         return recurringExpenseRepository.findByUserAndFrequency(user, frequency);
     }
 
-    public List<RecurringExpense> getAllUserRecurringExpenses(User user) {
-        return recurringExpenseRepository.findByUser(user);
+    // Pagination
+    public Page<RecurringExpense> getAllUserRecurringExpenses(User user, Pageable pageable) {
+        return recurringExpenseRepository.findByUser(user, pageable);
     }
 
-    public List<RecurringExpense> searchRecurringExpenses(
+    // Search
+    // Pagination
+    public Page<RecurringExpense> searchRecurringExpenses(
             User user,
             String title,
             Integer categoryId,
-            Frequency frequency
+            Frequency frequency,
+            Pageable pageable
     ) {
-        return getAllUserRecurringExpenses(user).stream()
-                .filter(recurringExpense -> title == null || recurringExpense.getTitle().toLowerCase().trim().equals(title.toLowerCase().trim()))
-                .filter(recurringExpense -> categoryId == null || recurringExpense.getCategory().getId().equals(categoryId))
-                .filter(recurringExpense -> frequency == null || recurringExpense.getFrequency().equals(frequency))
-                .toList();
+        Specification<RecurringExpense> criteria = (root, query, cb) -> {
+            List<Predicate> conditions = new ArrayList<>();
+
+            // Always restrict the search to the authenticated user.
+            conditions.add(cb.equal(root.get("user"), user));
+
+            if (title != null && !title.isBlank()) {
+                String escapedTitle = title.trim()
+                        .toLowerCase(Locale.ROOT)
+                        .replace("\\", "\\\\")
+                        .replace("%", "\\%")
+                        .replace("_", "\\_");
+
+                conditions.add(cb.like(
+                        cb.lower(root.get("title")),
+                        "%" + escapedTitle + "%",
+                        '\\'
+                ));
+            }
+
+            if (categoryId != null) {
+                conditions.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+
+            if (frequency != null) {
+                conditions.add(cb.equal(root.get("frequency"), frequency));
+            }
+
+            return cb.and(conditions.toArray(new Predicate[0]));
+        };
+
+        return recurringExpenseRepository.findAll(criteria, pageable);
     }
 
-    // Filter
-    public List<RecurringExpense> filterRecurringExpensesByAmount(User user, BigDecimal minAmount, BigDecimal maxAmount) {
-        if (minAmount != null && maxAmount != null && minAmount.compareTo(maxAmount) > 0) {
-            throw new InvalidRequestException("Minimum amount cannot be greater than maximum amount");
+    // Filter recurring expenses by amount
+    // Pagination
+    public Page<RecurringExpense> filterRecurringExpensesByAmount(
+            User user,
+            BigDecimal minAmount,
+            BigDecimal maxAmount,
+            Pageable pageable
+    ) {
+        if (minAmount != null && maxAmount != null
+                && minAmount.compareTo(maxAmount) > 0) {
+            throw new InvalidRequestException(
+                    "Minimum amount cannot be greater than maximum amount."
+            );
         }
-       return recurringExpenseRepository.findByUserAndAmountBetween(user, minAmount, maxAmount);
+
+        Specification<RecurringExpense> criteria = (root, query, cb) -> {
+            List<Predicate> conditions = new ArrayList<>();
+
+            conditions.add(cb.equal(root.get("user"), user));
+
+            if (minAmount != null) {
+                conditions.add(cb.greaterThanOrEqualTo(
+                        root.<BigDecimal>get("amount"), minAmount
+                ));
+            }
+
+            if (maxAmount != null) {
+                conditions.add(cb.lessThanOrEqualTo(
+                        root.<BigDecimal>get("amount"), maxAmount
+                ));
+            }
+
+            return cb.and(conditions.toArray(new Predicate[0]));
+        };
+
+        return recurringExpenseRepository.findAll(criteria, pageable);
     }
 
     // Delete

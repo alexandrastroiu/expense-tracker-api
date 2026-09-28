@@ -7,11 +7,19 @@ import com.project.expensemanager.exception.InvalidRequestException;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.CategoryRepository;
 import com.project.expensemanager.repository.ExpenseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import jakarta.persistence.criteria.Predicate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class ExpenseService {
@@ -34,8 +42,8 @@ public class ExpenseService {
     }
 
     // Read
-    public List<Expense> getExpensesForUser(User user) {
-        return expenseRepository.findByUser(user);
+    public Page<Expense> getExpensesForUser(User user, Pageable pageable) {
+        return expenseRepository.findByUser(user, pageable);
     }
 
     public Expense getUserExpenseById(User user, Integer expenseId) {
@@ -61,91 +69,112 @@ public class ExpenseService {
     }
 
     // Search expense by a criteria
-    public List<Expense> searchExpenses(
+    // Pagination
+    public Page<Expense> searchExpenses(
             User user,
             LocalDate expenseDate,
             String title,
             Integer categoryId,
-            BigDecimal amount
+            BigDecimal amount,
+            Pageable pageable
     ) {
-        return getExpensesForUser(user).stream()
-                .filter(expense -> expenseDate == null || expense.getExpenseDate().equals(expenseDate))
-                .filter(expense -> title == null || expense.getTitle().toLowerCase().trim().equals(title.toLowerCase().trim()))
-                .filter(expense -> categoryId == null || expense.getCategory().getId().equals(categoryId))
-                .filter(expense -> amount == null || expense.getAmount().compareTo(amount) == 0)
-                .toList();
+        Specification<Expense> criteria = (root, query, cb) -> {
+            List<Predicate> conditions = new ArrayList<>();
+
+            conditions.add(cb.equal(root.get("user"), user));
+
+            if (expenseDate != null) {
+                conditions.add(cb.equal(root.get("expenseDate"), expenseDate));
+            }
+
+            if (title != null && !title.isBlank()) {
+                String escapedTitle = title.trim()
+                        .toLowerCase(Locale.ROOT)
+                        .replace("\\", "\\\\")
+                        .replace("%", "\\%")
+                        .replace("_", "\\_");
+
+                conditions.add(cb.like(
+                        cb.lower(root.get("title")),
+                        "%" + escapedTitle + "%",
+                        '\\'
+                ));
+            }
+
+            if (categoryId != null) {
+                conditions.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+
+            if (amount != null) {
+                conditions.add(cb.equal(root.get("amount"), amount));
+            }
+
+            return cb.and(conditions.toArray(new Predicate[0]));
+        };
+
+        return expenseRepository.findAll(criteria, pageable);
     }
 
+
     // Filter user expenses
-   public List<Expense> filterExpenses(User user, Integer categoryId, BigDecimal minAmount, BigDecimal maxAmount, LocalDate start, LocalDate end) {
-        boolean hasAmountRange = minAmount != null && maxAmount != null;
-        boolean hasPartialAmountRange = minAmount != null ^ maxAmount != null;
-        boolean hasSingleDate = start != null ^ end != null;
-
-        if (hasPartialAmountRange) {
-            throw new InvalidRequestException("Both minimum amount and maximum amount must be provided.");
+    // Pagination
+    public Page<Expense> filterExpenses(
+            User user,
+            Integer categoryId,
+            BigDecimal minAmount,
+            BigDecimal maxAmount,
+            LocalDate start,
+            LocalDate end,
+            Pageable pageable
+    ) {
+        if (start != null && end != null && end.isBefore(start)) {
+            throw new InvalidRequestException("End date cannot be before start date.");
         }
 
-        if (hasAmountRange && hasSingleDate) {
-            throw new InvalidRequestException("An amount range can only be combined with a complete date range.");
+        if (minAmount != null && maxAmount != null
+                && minAmount.compareTo(maxAmount) > 0) {
+            throw new InvalidRequestException(
+                    "Minimum amount cannot be greater than maximum amount."
+            );
         }
 
-        if (categoryId != null) {
-            Category selectedCategory = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category not found."));
+        if (categoryId != null && !categoryRepository.existsById(categoryId)) {
+            throw new ResourceNotFoundException("Category not found.");
+        }
 
-            if (start != null && end != null && minAmount != null && maxAmount != null) {
-                validateDate(end, start);
-                validateAmount(minAmount, maxAmount);
-                return expenseRepository.findByUserAndCategoryAndExpenseDateBetweenAndAmountBetween(user, selectedCategory, start, end, minAmount, maxAmount);
+        Specification<Expense> criteria = (root, query, cb) -> {
+            List<Predicate> conditions = new ArrayList<>();
+
+            conditions.add(cb.equal(root.get("user"), user));
+
+            if (categoryId != null) {
+                conditions.add(cb.equal(root.get("category").get("id"), categoryId));
             }
-
-            if (start != null && end != null) {
-                validateDate(end, start);
-                return expenseRepository.findByUserAndCategoryAndExpenseDateBetween(user, selectedCategory, start, end);
+            if (minAmount != null) {
+                conditions.add(cb.greaterThanOrEqualTo(
+                        root.<BigDecimal>get("amount"), minAmount
+                ));
             }
-
+            if (maxAmount != null) {
+                conditions.add(cb.lessThanOrEqualTo(
+                        root.<BigDecimal>get("amount"), maxAmount
+                ));
+            }
             if (start != null) {
-                return expenseRepository.findByUserAndCategoryAndExpenseDateGreaterThanEqual(user, selectedCategory, start);
+                conditions.add(cb.greaterThanOrEqualTo(
+                        root.<LocalDate>get("expenseDate"), start
+                ));
             }
-
             if (end != null) {
-                return expenseRepository.findByUserAndCategoryAndExpenseDateLessThanEqual(user, selectedCategory, end);
+                conditions.add(cb.lessThanOrEqualTo(
+                        root.<LocalDate>get("expenseDate"), end
+                ));
             }
 
-            if ( minAmount != null && maxAmount != null) {
-                validateAmount(minAmount, maxAmount);
-                return expenseRepository.findByUserAndCategoryAndAmountBetween(user, selectedCategory, minAmount, maxAmount);
-            }
+            return cb.and(conditions.toArray(new Predicate[0]));
+        };
 
-            return expenseRepository.findByUserAndCategory(user, selectedCategory);
-        }
-        else {
-            if (start != null && end != null && minAmount != null && maxAmount != null) {
-                validateDate(end, start);
-                validateAmount(minAmount, maxAmount);
-                return expenseRepository.findByUserAndExpenseDateBetweenAndAmountBetween(user, start, end, minAmount, maxAmount);
-            }
-
-            if (start != null && end != null) {
-                validateDate(end, start);
-                return expenseRepository.findByUserAndExpenseDateBetween(user, start, end);
-            }
-
-            if (start != null) {
-                return expenseRepository.findByUserAndExpenseDateGreaterThanEqual(user, start);
-            }
-
-            if (end != null) {
-                return expenseRepository.findByUserAndExpenseDateLessThanEqual(user, end);
-            }
-
-            if (minAmount != null && maxAmount != null) {
-                validateAmount(minAmount, maxAmount);
-                return expenseRepository.findByUserAndAmountBetween(user, minAmount, maxAmount);
-            }
-        }
-
-        return getExpensesForUser(user);
+        return expenseRepository.findAll(criteria, pageable);
     }
 
 

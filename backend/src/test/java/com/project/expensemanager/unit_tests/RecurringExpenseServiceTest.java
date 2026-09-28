@@ -12,6 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -180,86 +185,140 @@ public class RecurringExpenseServiceTest {
     }
 
     @Test
-    public void getAllUserRecurringExpenses_ReturnsCorrectData() {
+    public void getAllUserRecurringExpenses_ReturnsPage() {
         Integer id = 1;
         Category category = new Category("Entertainment");
         category.setId(id);
-        List<RecurringExpense> expected = List.of(new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY));
-        expected.getFirst().setId(id);
 
-        when(recurringExpenseRepository.findByUser(user)).thenReturn(expected);
-        List<RecurringExpense> result = recurringExpenseService.getAllUserRecurringExpenses(user);
+        RecurringExpense recurringExpense = new RecurringExpense(
+                user,
+                "Netflix subscription",
+                "",
+                new BigDecimal("5.99"),
+                category,
+                LocalDate.of(2026, 9, 28),
+                LocalDate.of(2026, 10, 28),
+                Frequency.MONTHLY
+        );
+        recurringExpense.setId(id);
+
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<RecurringExpense> expected = new PageImpl<>(List.of(recurringExpense), pageable, 1);
+
+        when(recurringExpenseRepository.findByUser(user, pageable)).thenReturn(expected);
+        Page<RecurringExpense> result = recurringExpenseService.getAllUserRecurringExpenses(user, pageable);
         assertSame(expected, result);
-        verify(recurringExpenseRepository).findByUser(user);
+        verify(recurringExpenseRepository).findByUser(user, pageable);
     }
 
     @Test
-    public void searchRecurringExpenses_WithCriteria_ReturnsCorrectData() {
-        Integer id = 1;
-        String title = "Netflix subscription";
+    public void searchRecurringExpenses_WithCriteria_ReturnsPage() {
         Category category = new Category("Entertainment");
-        category.setId(id);
-        List<RecurringExpense> recurringExpenses = List.of(
-                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
-                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
-        );
-        List<RecurringExpense> expected = List.of(recurringExpenses.get(1));
+        category.setId(1);
 
-        when(recurringExpenseRepository.findByUser(user)).thenReturn(List.of(recurringExpenses.get(1)));
-        List<RecurringExpense> result = recurringExpenseService.searchRecurringExpenses(user, title, null, null);
-        assertEquals(expected, result);
-        verify(recurringExpenseRepository).findByUser(user);
+        RecurringExpense netflix = new RecurringExpense(
+                user, "Netflix subscription", "",
+                new BigDecimal("5.99"), category,
+                LocalDate.of(2026, 9, 28),
+                LocalDate.of(2026, 10, 28),
+                Frequency.MONTHLY
+        );
+
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<RecurringExpense> expected =
+                new PageImpl<>(List.of(netflix), pageable, 1);
+
+        when(recurringExpenseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(expected);
+
+        Page<RecurringExpense> result =
+                recurringExpenseService.searchRecurringExpenses(
+                        user, "Netflix", null, null, pageable
+                );
+
+        assertSame(expected, result);
+        verify(recurringExpenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
-    public void searchRecurringExpenses_WithNoCriteria_ReturnsCorrectData() {
-        Integer id = 1;
+    public void searchRecurringExpenses_WithNoCriteria_ReturnsPage() {
         Category category = new Category("Entertainment");
-        category.setId(id);
-        List<RecurringExpense> recurringExpenses = List.of(
-                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
-                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
+        category.setId(1);
+
+        LocalDate start = LocalDate.of(2026, 9, 28);
+        List<RecurringExpense> expenses = List.of(
+                new RecurringExpense(user, "YouTube", "",
+                        new BigDecimal("4.99"), category,
+                        start, start.plusMonths(1), Frequency.MONTHLY),
+                new RecurringExpense(user, "Netflix subscription", "",
+                        new BigDecimal("5.99"), category,
+                        start, start.plusMonths(1), Frequency.MONTHLY)
         );
 
-        when(recurringExpenseRepository.findByUser(user)).thenReturn(recurringExpenses);
-        List<RecurringExpense> result = recurringExpenseService.searchRecurringExpenses(user, null, null, null);
-        assertEquals(recurringExpenses, result);
-        verify(recurringExpenseRepository).findByUser(user);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<RecurringExpense> expected =
+                new PageImpl<>(expenses, pageable, expenses.size());
+
+        when(recurringExpenseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(expected);
+
+        Page<RecurringExpense> result =
+                recurringExpenseService.searchRecurringExpenses(
+                        user, null, null, null, pageable
+                );
+
+        assertSame(expected, result);
+        verify(recurringExpenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
-    public void filterRecurringExpensesByAmount_ReturnsCorrectData() {
-        Integer id = 1;
+    public void filterRecurringExpensesByAmount_ReturnsPage() {
         Category category = new Category("Entertainment");
-        category.setId(id);
-        BigDecimal minAmount = new BigDecimal("2.00"), maxAmount = new BigDecimal("5.00");
-        List<RecurringExpense> recurringExpenses = List.of(
-                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
-                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
-        );
-        List<RecurringExpense> expected = List.of(recurringExpenses.getFirst());
+        category.setId(1);
 
-        when(recurringExpenseRepository.findByUserAndAmountBetween(user, minAmount, maxAmount)).thenReturn(expected);
-        List<RecurringExpense> result = recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount);
-        assertEquals(expected, result);
-        verify(recurringExpenseRepository).findByUserAndAmountBetween(user, minAmount, maxAmount);
+        LocalDate start = LocalDate.of(2026, 9, 28);
+        RecurringExpense youtube = new RecurringExpense(
+                user, "Youtube", "", new BigDecimal("4.99"),
+                category, start, start.plusMonths(1), Frequency.MONTHLY
+        );
+
+        BigDecimal minAmount = new BigDecimal("2.00");
+        BigDecimal maxAmount = new BigDecimal("5.00");
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<RecurringExpense> expected =
+                new PageImpl<>(List.of(youtube), pageable, 1);
+
+        when(recurringExpenseRepository.findAll(
+                any(Specification.class), eq(pageable)
+        )).thenReturn(expected);
+
+        Page<RecurringExpense> result =
+                recurringExpenseService.filterRecurringExpensesByAmount(
+                        user, minAmount, maxAmount, pageable
+                );
+
+        assertSame(expected, result);
+        verify(recurringExpenseRepository).findAll(
+                any(Specification.class), eq(pageable)
+        );
     }
 
     @Test
     public void filterRecurringExpensesByAmount_WithInvalidFilter_ThrowsInvalidRequestException() {
-        Integer id = 1;
-        Category category = new Category("Entertainment");
-        category.setId(id);
-        BigDecimal minAmount = new BigDecimal("5.00"), maxAmount = new BigDecimal("2.00");
-        List<RecurringExpense> recurringExpenses = List.of(
-                new RecurringExpense(user, "Youtube", "", new BigDecimal("4.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY),
-                new RecurringExpense(user, "Netflix subscription", "", new BigDecimal("5.99"), category, LocalDate.now(), LocalDate.now().plusMonths(1), Frequency.MONTHLY)
-        );
-        List<RecurringExpense> expected = List.of(recurringExpenses.getFirst());
+        BigDecimal minAmount = new BigDecimal("5.00");
+        BigDecimal maxAmount = new BigDecimal("2.00");
+        Pageable pageable = PageRequest.of(0, 20);
 
-        Exception exception = assertThrows(InvalidRequestException.class,
-                () -> recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount));
-        assertEquals("Minimum amount cannot be greater than maximum amount", exception.getMessage());
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> recurringExpenseService.filterRecurringExpensesByAmount(
+                        user, minAmount, maxAmount, pageable
+                )
+        );
+
+        assertEquals(
+                "Minimum amount cannot be greater than maximum amount.",
+                exception.getMessage()
+        );
+        verifyNoInteractions(recurringExpenseRepository);
     }
 
     // Test update method

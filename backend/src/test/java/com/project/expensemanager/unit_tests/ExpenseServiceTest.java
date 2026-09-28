@@ -14,6 +14,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -78,15 +83,20 @@ public class ExpenseServiceTest {
     // Test read methods
     @Test
     public void getExpensesForUser_ReturnsCorrectData() {
-        List<Expense> expected = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), new Category("Groceries"), LocalDate.now()),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), LocalDate.now())
+        List<Expense> expenses = List.of(
+                new Expense(user, "Groceries", "Weekly groceries",
+                new BigDecimal("100.00"), new Category("Groceries"), LocalDate.now()),
+                new Expense(user, "Movie tickets", "tickets",
+                new BigDecimal("50.00"), new Category("Entertainment"), LocalDate.now())
         );
 
-        when(expenseRepository.findByUser(user)).thenReturn(expected);
-        List<Expense> result = expenseService.getExpensesForUser(user);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Expense> expected = new PageImpl<>(expenses, pageable, expenses.size());
+
+        when(expenseRepository.findByUser(user, pageable)).thenReturn(expected);
+        Page<Expense> result = expenseService.getExpensesForUser(user, pageable);
         assertSame(expected, result);
-        verify(expenseRepository).findByUser(user);
+        verify(expenseRepository).findByUser(user, pageable);
     }
 
     @Test
@@ -191,153 +201,134 @@ public class ExpenseServiceTest {
     @Test
     public void searchExpenses_WithCriteria_ReturnsCorrectData() {
         LocalDate date = LocalDate.now();
+        Pageable pageable = PageRequest.of(0, 20);
         List<Expense> expenses = List.of(
                 new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), new Category("Groceries"), date),
                 new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), date.plusWeeks(1))
         );
-        List<Expense> expected = List.of(expenses.getFirst());
+        Page<Expense> expected = new PageImpl<>(expenses, pageable, 1);
 
-        when(expenseRepository.findByUser(user)).thenReturn(expected);
-        List<Expense> result = expenseService.searchExpenses(user, date, "Groceries", null, null);
+        when(expenseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(expected);
+        Page<Expense> result = expenseService.searchExpenses(user, date, "Groceries", null, null, pageable);
         assertEquals(expected, result);
-        verify(expenseRepository).findByUser(user);
+        verify(expenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
-    public void searchExpenses_WithNoCriteria_ReturnsCorrectData() {
-        LocalDate date = LocalDate.now();
+    public void filterExpenses_WithNoFilter_ReturnsPage() {
+        Pageable pageable = PageRequest.of(0, 20);
         List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), new Category("Groceries"), date),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), date.plusWeeks(1))
+                new Expense(user, "Groceries", "Weekly groceries",
+                new BigDecimal("100.00"), new Category("Groceries"),
+                LocalDate.of(2026, 9, 28)),
+                new Expense(user, "Movie tickets", "Tickets",
+                new BigDecimal("50.00"), new Category("Entertainment"),
+                LocalDate.of(2026, 9, 29))
         );
-        List<Expense> expected = List.of(expenses.getFirst());
+        Page<Expense> expected = new PageImpl<>(expenses, pageable, expenses.size());
 
-        when(expenseRepository.findByUser(user)).thenReturn(expected);
-        List<Expense> result = expenseService.searchExpenses(user, null, null, null, null);
-        assertEquals(expected, result);
-        verify(expenseRepository).findByUser(user);
+        when(expenseRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(expected);
+        Page<Expense> result = expenseService.filterExpenses(
+                user, null, null, null, null, null, pageable
+        );
+        assertSame(expected, result);
+        verify(expenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
-    public void filterExpenses_WithNoFilter_ReturnsCorrectData() {
-        LocalDate date = LocalDate.now();
-        List<Expense> expected = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), new Category("Groceries"), date),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), date.plusWeeks(1))
-        );
+    public void filterExpenses_WithCategoryAndStartDate_ReturnsPage() {
+        Integer categoryId = 1;
+        LocalDate start = LocalDate.of(2026, 9, 28);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Expense> expected = new PageImpl<>(List.of(), pageable, 0);
 
-        when(expenseRepository.findByUser(user)).thenReturn(expected);
-        List<Expense> result = expenseService.filterExpenses(user, null, null, null, null, null);
+        when(categoryRepository.existsById(categoryId)).thenReturn(true);
+        when(expenseRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(expected);
+        Page<Expense> result = expenseService.filterExpenses(
+                user, categoryId, null, null, start, null, pageable
+        );
         assertSame(expected, result);
-        verify(expenseRepository).findByUser(user);
+        verify(categoryRepository).existsById(categoryId);
+        verify(expenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
-    public void filterExpenses_WithFilter_ReturnsCorrectData() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate date = LocalDate.now();
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, date.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), date)
-        );
-        List<Expense> expected = List.of(expenses.getFirst());
+    public void filterExpenses_WithAllFilters_ReturnsPage() {
+        Integer categoryId = 1;
+        LocalDate start = LocalDate.of(2026, 9, 28);
+        LocalDate end = start.plusWeeks(2);
+        BigDecimal min = new BigDecimal("70.00");
+        BigDecimal max = new BigDecimal("120.00");
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Expense> expected = new PageImpl<>(List.of(), pageable, 0);
 
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(expenseRepository.findByUserAndCategoryAndExpenseDateGreaterThanEqual(user,category, date)).thenReturn(expected);
-        List<Expense> result = expenseService.filterExpenses(user, category.getId(), null, null, date, null);
+        when(categoryRepository.existsById(categoryId)).thenReturn(true);
+        when(expenseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(expected);
+        Page<Expense> result = expenseService.filterExpenses(user, categoryId, min, max, start, end, pageable);
         assertSame(expected, result);
-        verify(expenseRepository).findByUserAndCategoryAndExpenseDateGreaterThanEqual(user,category, date);
+        verify(expenseRepository).findAll(any(Specification.class), eq(pageable));
     }
-
-    @Test
-    public void filterExpenses_WithAllFilters_ReturnsCorrectData() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate startDate = LocalDate.now(), endDate = startDate.plusWeeks(2);
-        BigDecimal minAmount = new BigDecimal("70.00"), maxAmount = new BigDecimal("120.00");
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, startDate.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), startDate)
-        );
-        List<Expense> expected = List.of( expenses.getFirst());
-
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        when(expenseRepository.findByUserAndCategoryAndExpenseDateBetweenAndAmountBetween(user, category, startDate, endDate, minAmount, maxAmount)).thenReturn(expected);
-        List<Expense> result = expenseService.filterExpenses(user, category.getId(), minAmount, maxAmount, startDate, endDate);
-        assertSame(expected, result);
-        verify(expenseRepository).findByUserAndCategoryAndExpenseDateBetweenAndAmountBetween(user, category, startDate, endDate, minAmount, maxAmount);
-    }
-
 
     @Test
     public void filterExpenses_WithInvalidCategory_ThrowsResourceNotFoundException() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate date = LocalDate.now();
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, date.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), date)
-        );
+        Integer categoryId = 1;
+        Pageable pageable = PageRequest.of(0, 20);
 
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.empty());
-        Exception exception = assertThrows(ResourceNotFoundException.class,
-                () -> expenseService.filterExpenses(user, category.getId(), null, null, date, null)
+        when(categoryRepository.existsById(categoryId)).thenReturn(false);
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> expenseService.filterExpenses(user, categoryId, null, null, null, null, pageable)
         );
         assertEquals("Category not found.", exception.getMessage());
+        verify(expenseRepository, never()).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
-    public void filterExpenses_WithInvalidAmountFilter_ThrowsInvalidRequestException() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate startDate = LocalDate.now(), endDate = startDate.plusWeeks(2);
-        BigDecimal minAmount = new BigDecimal("170.00"), maxAmount = new BigDecimal("20.00");
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, startDate.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), startDate)
-        );
+    public void filterExpenses_WithReversedAmountRange_ThrowsInvalidRequestException() {
+        Pageable pageable = PageRequest.of(0, 20);
 
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        Exception exception = assertThrows(InvalidRequestException.class,
-                () -> expenseService.filterExpenses(user, category.getId(), minAmount, maxAmount, startDate, endDate)
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> expenseService.filterExpenses(
+                        user, null,
+                        new BigDecimal("170.00"),
+                        new BigDecimal("20.00"),
+                        null, null, pageable
+                )
         );
-        assertEquals("Minimum amount cannot be greater than maximum amount", exception.getMessage());
+        assertEquals("Minimum amount cannot be greater than maximum amount.", exception.getMessage());
+        verifyNoInteractions(expenseRepository);
     }
 
     @Test
-    public void filterExpenses_WithInvalidDateFilter_ThrowsInvalidRequestException() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate startDate = LocalDate.now().plusWeeks(1), endDate = LocalDate.now();
-        BigDecimal minAmount = new BigDecimal("20.00"), maxAmount = new BigDecimal("120.00");
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, startDate.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), startDate)
-        );
+    public void filterExpenses_WithReversedDateRange_ThrowsInvalidRequestException() {
+        LocalDate start = LocalDate.of(2026, 9, 29);
+        LocalDate end = LocalDate.of(2026, 9, 28);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        when(categoryRepository.findById(category.getId())).thenReturn(Optional.of(category));
-        Exception exception = assertThrows(InvalidRequestException.class,
-                () -> expenseService.filterExpenses(user, category.getId(), minAmount, maxAmount, startDate, endDate)
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> expenseService.filterExpenses(
+                        user, null, null, null, start, end, pageable
+                )
         );
-        assertEquals("End date cannot be before start date", exception.getMessage());
+        assertEquals("End date cannot be before start date.", exception.getMessage());
+        verifyNoInteractions(expenseRepository);
     }
 
     @Test
-    public void filterExpenses_WithInvalidArguments_ThrowsInvalidRequestException() {
-        Category category = new Category("Groceries");
-        category.setId(1);
-        LocalDate startDate = LocalDate.now().plusWeeks(1), endDate = LocalDate.now();
-        BigDecimal minAmount = new BigDecimal("20.00"), maxAmount = null;
-        List<Expense> expenses = List.of(
-                new Expense(user, "Groceries", "Weekly groceries", new BigDecimal("100.00"), category, startDate.plusWeeks(1)),
-                new Expense(user, "Movie tickets", "tickets", new BigDecimal("50.00"), new Category("Entertainment"), startDate)
-        );
+    public void filterExpenses_WithOnlyMinimumAmount_ReturnsPage() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Expense> expected = new PageImpl<>(List.of(), pageable, 0);
 
-        Exception exception = assertThrows(InvalidRequestException.class,
-                () -> expenseService.filterExpenses(user, category.getId(), minAmount, maxAmount, startDate, endDate)
+        when(expenseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(expected);
+        Page<Expense> result = expenseService.filterExpenses(
+                user, null, new BigDecimal("20.00"), null, null, null, pageable
         );
-        assertEquals("Both minimum amount and maximum amount must be provided.", exception.getMessage());
+        assertSame(expected, result);
+        verify(expenseRepository).findAll(any(Specification.class), eq(pageable));
     }
 
     // Test update method

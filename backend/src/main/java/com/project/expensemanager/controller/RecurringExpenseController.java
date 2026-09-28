@@ -1,7 +1,6 @@
 package com.project.expensemanager.controller;
 
 import com.project.expensemanager.dto.error.ErrorResponse;
-import com.project.expensemanager.dto.expense.ExpenseResponse;
 import com.project.expensemanager.dto.recurringexpense.RecurringExpenseRequest;
 import com.project.expensemanager.dto.recurringexpense.RecurringExpenseResponse;
 import com.project.expensemanager.entity.Category;
@@ -20,13 +19,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
@@ -98,21 +100,31 @@ public class RecurringExpenseController {
     }
 
     // Get all user recurring expenses
+    // Pagination
     @Operation(
             summary = "Get all recurring expenses",
             description = "Returns all recurring expenses belonging to the authenticated user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class)))
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Recurring expenses retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = RecurringExpenseResponse.class))
+            )
     })
     @GetMapping
-    public ResponseEntity<List<RecurringExpenseResponse>> getAllRecurringExpenses(
-            Authentication authentication
+    public ResponseEntity<Page<RecurringExpenseResponse>> getAllRecurringExpenses(
+            Authentication authentication,
+            @PageableDefault(
+                    size = 20,
+                    sort = {"startDate", "id"},
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
-        List<RecurringExpense> expenses = recurringExpenseService.getAllUserRecurringExpenses(user);
-        List<RecurringExpenseResponse> response = expenses.stream().map(recurringExpenseMapper::mapToResponse).toList();
+        Page<RecurringExpense> expenses = recurringExpenseService.getAllUserRecurringExpenses(user, pageable);
+        Page<RecurringExpenseResponse> response = expenses.map(recurringExpenseMapper::mapToResponse);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -140,6 +152,7 @@ public class RecurringExpenseController {
     }
 
     // Search recurring expenses
+    // Pagination
     @Operation(
             summary = "Search recurring expenses",
             description = "Returns the authenticated user's recurring expenses that match the specified search criteria."
@@ -149,26 +162,33 @@ public class RecurringExpenseController {
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/search")
-    public ResponseEntity<List<RecurringExpenseResponse>> searchRecurringExpenses (
+    public ResponseEntity<Page<RecurringExpenseResponse>> searchRecurringExpenses (
             Authentication authentication,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) Frequency frequency,
-            @RequestParam(required = false) Integer categoryId
+            @RequestParam(required = false) Integer categoryId,
+            @PageableDefault(
+                    size = 20,
+                    sort = {"startDate", "id"},
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
-        List<RecurringExpense> expenses = recurringExpenseService.searchRecurringExpenses(
+        Page<RecurringExpense> expenses = recurringExpenseService.searchRecurringExpenses(
                 user,
                 title,
                 categoryId,
-                frequency
+                frequency,
+                pageable
         );
-        List<RecurringExpenseResponse> response = expenses.stream().map(recurringExpenseMapper::mapToResponse).toList();
+        Page<RecurringExpenseResponse> response = expenses.map(recurringExpenseMapper::mapToResponse);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     // Filter recurring expenses by amount
+    // Pagination
     @Operation(
             summary = "Filter recurring expenses",
             description = "Returns the authenticated user's recurring expenses that match the specified filter criteria."
@@ -178,16 +198,20 @@ public class RecurringExpenseController {
             @ApiResponse(responseCode = "400", description = "Invalid filtering criteria", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/filter")
-    public ResponseEntity<List<RecurringExpenseResponse>> filterRecurringExpenses (
+    public ResponseEntity<Page<RecurringExpenseResponse>> filterRecurringExpenses (
             Authentication authentication,
             @RequestParam BigDecimal minAmount,
-            @RequestParam BigDecimal maxAmount
+            @RequestParam BigDecimal maxAmount,
+            @PageableDefault(
+                    size = 20,
+                    sort = {"startDate", "id"},
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
-        List<RecurringExpense> expenses = recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount);
-        List<RecurringExpenseResponse> response = expenses.stream().map(recurringExpenseMapper::mapToResponse).toList();
-
+        Page<RecurringExpense> expenses = recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount, pageable);
+        Page<RecurringExpenseResponse> response = expenses.map(recurringExpenseMapper::mapToResponse);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

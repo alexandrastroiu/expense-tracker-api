@@ -18,6 +18,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,7 +29,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Expenses", description = "Manage user expenses")
@@ -72,6 +75,32 @@ public class ExpenseController {
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
             }
 
+    // Get all user expenses
+    // Pagination
+    @Operation(
+            summary = "Get all expenses",
+            description = "Returns all expenses belonging to the authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Eexpenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class)))
+    })
+    @GetMapping
+    public ResponseEntity<Page<ExpenseResponse>> getAllRecurringExpenses(
+            Authentication authentication,
+            @PageableDefault(
+                    size = 20,
+                    sort = {"expenseDate", "id"},
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        String username = authentication.getName();
+        User user = userService.getUserByUsername(username);
+        Page<Expense> expenses = expenseService.getExpensesForUser(user, pageable);
+        Page<ExpenseResponse> response = expenses.map(expenseMapper::mapToResponse);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     // Get expense by ID
     @Operation(
             summary = "Get expense by ID",
@@ -95,33 +124,40 @@ public class ExpenseController {
     }
 
     // Filter expenses
+    // Pagination
     @Operation(
-            summary = "Get all expenses",
-            description = "Returns all expenses belonging to the authenticated user."
+            summary = "Filter expenses",
+            description = "Returns  expenses belonging to the authenticated user filtered by criteria."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
             @ApiResponse(responseCode = "400", description = "Filtering criteria is invalid", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping
-    public ResponseEntity<List<ExpenseResponse>> getExpenses(
+    @GetMapping("/filter")
+    public ResponseEntity<Page<ExpenseResponse>> filterExpenses(
             Authentication authentication,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(required = false) LocalDate start,
-            @RequestParam(required = false) LocalDate end
+            @RequestParam(required = false) LocalDate end,
+            @PageableDefault(
+                    size = 20,
+                    sort = {"expenseDate", "id"},
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
             ) {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
-        List<Expense> filteredExpenses = expenseService.filterExpenses(user, categoryId, minAmount, maxAmount, start, end);
-        List<ExpenseResponse> response = filteredExpenses.stream().map(expenseMapper::mapToResponse).toList();
+        Page<Expense> filteredExpenses = expenseService.filterExpenses(user, categoryId, minAmount, maxAmount, start, end, pageable);
+        Page<ExpenseResponse> response = filteredExpenses.map(expenseMapper::mapToResponse);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
         }
 
      // Search expenses
+    // Pagination
     @Operation(
              summary = "Search expenses",
              description = "Returns the authenticated user's expenses that match the specified search criteria."
@@ -131,23 +167,29 @@ public class ExpenseController {
              @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/search")
-    public ResponseEntity<List<ExpenseResponse>> searchExpenses (
+    public ResponseEntity<Page<ExpenseResponse>> searchExpenses (
         Authentication authentication,
         @RequestParam(required = false) String title,
         @RequestParam(required = false) LocalDate expenseDate,
         @RequestParam(required = false) BigDecimal amount,
-        @RequestParam(required = false) Integer categoryId
+        @RequestParam(required = false) Integer categoryId,
+        @PageableDefault(
+                size = 20,
+                sort = {"expenseDate", "id"},
+                direction = Sort.Direction.DESC
+        ) Pageable pageable
     ) {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
-        List<Expense> expenses = expenseService.searchExpenses(
+        Page<Expense> expenses = expenseService.searchExpenses(
                 user,
                 expenseDate,
                 title,
                 categoryId,
-                amount
+                amount,
+                pageable
         );
-        List<ExpenseResponse> response = expenses.stream().map(expenseMapper::mapToResponse).toList();
+        Page<ExpenseResponse> response = expenses.map(expenseMapper::mapToResponse);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

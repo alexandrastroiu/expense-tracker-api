@@ -3,17 +3,23 @@ package com.project.expensemanager.repository;
 import com.project.expensemanager.entity.Category;
 import com.project.expensemanager.entity.Expense;
 import com.project.expensemanager.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface ExpenseRepository extends JpaRepository<Expense, Integer> {
+public interface ExpenseRepository extends JpaRepository<Expense, Integer>,
+        JpaSpecificationExecutor<Expense> {
 
     // Query methods
     List<Expense> findByUser(User user);
+
+    Page<Expense> findByUser(User user, Pageable pageable);     // Pagination
 
     Optional<Expense> findByUserAndId(User user, Integer id);
 

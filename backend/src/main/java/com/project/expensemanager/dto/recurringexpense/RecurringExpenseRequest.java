@@ -11,7 +11,7 @@ public record RecurringExpenseRequest(
         @Size(max = 100, message = "Title cannot exceed 100 characters")
         String title,
 
-        @Size(max = 500, message = "Description cannot exceed 100 characters")
+        @Size(max = 500, message = "Description cannot exceed 500 characters")
         String description,
 
         @NotNull(message = "Expense amount is required")

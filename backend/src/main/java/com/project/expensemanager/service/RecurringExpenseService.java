@@ -8,6 +8,7 @@ import com.project.expensemanager.exception.InvalidRequestException;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.CategoryRepository;
 import com.project.expensemanager.repository.RecurringExpenseRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,6 +35,7 @@ public class RecurringExpenseService {
 
     // Business logic
     // Create
+    @Transactional
     public RecurringExpense createRecurringExpense(RecurringExpense recurringExpense) {
         Category category = categoryRepository.findById(recurringExpense.getCategory().getId()).orElseThrow( () -> new ResourceNotFoundException("Category not found"));
 
@@ -43,6 +45,7 @@ public class RecurringExpenseService {
     }
 
     // Update
+    @Transactional
     public RecurringExpense updateRecurringExpense(Integer recurringExpenseId,User user, RecurringExpense updatedRecurringExpense) {
         RecurringExpense recurringExpense = getUserRecurringExpenseById(user, recurringExpenseId);
 
@@ -167,6 +170,7 @@ public class RecurringExpenseService {
     }
 
     // Delete
+    @Transactional
     public void deleteRecurringExpense(User user, Integer recurringExpenseId) {
     RecurringExpense recurringExpense = getUserRecurringExpenseById(user, recurringExpenseId);
     recurringExpenseRepository.delete(recurringExpense);

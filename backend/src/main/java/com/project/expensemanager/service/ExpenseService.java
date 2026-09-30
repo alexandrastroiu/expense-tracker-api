@@ -7,6 +7,7 @@ import com.project.expensemanager.exception.InvalidRequestException;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.CategoryRepository;
 import com.project.expensemanager.repository.ExpenseRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class ExpenseService {
 
     // Business logic
     // Create
+    @Transactional
     public Expense createExpense(Expense expense) {
         Category category = categoryRepository.findById(expense.getCategory().getId()).orElseThrow( () -> new ResourceNotFoundException("Category not found"));
 
@@ -179,6 +181,7 @@ public class ExpenseService {
 
 
     // Update
+    @Transactional
     public Expense updateExpense(User user, Integer expenseId, Expense updatedExpense) {
         Expense expense = getUserExpenseById(user, expenseId);
 
@@ -194,6 +197,7 @@ public class ExpenseService {
     }
 
     // Delete
+    @Transactional
     public void deleteExpense(User user, Integer expenseId) {
         Expense expense = getUserExpenseById(user, expenseId);
         expenseRepository.delete(expense);

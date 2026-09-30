@@ -10,9 +10,11 @@ import com.project.expensemanager.model.BudgetSummary;
 import com.project.expensemanager.repository.BudgetRepository;
 import com.project.expensemanager.repository.ExpenseRepository;
 import com.project.expensemanager.repository.RecurringExpenseRepository;
+
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -35,6 +37,7 @@ public class BudgetService {
 
     // Business logic
     // Create
+    @Transactional
     public Budget createBudget(User user, Budget budget) {
         LocalDate date = budget.getBudgetPeriod().withDayOfMonth(1);        // Allow only one monthly budget
         Budget savedBudget = new Budget(user, budget.getAmount(), date);
@@ -64,6 +67,7 @@ public class BudgetService {
     }
 
     // Update
+    @Transactional
     public Budget updateBudget(User user, Integer budgetId, Budget updatedBudget) {
         Budget budget = getUserBudgetById(user, budgetId);
         LocalDate budgetPeriod = updatedBudget.getBudgetPeriod().withDayOfMonth(1);
@@ -87,6 +91,7 @@ public class BudgetService {
     }
 
     // Delete
+    @Transactional
     public void deleteBudget(User user, Integer budgetId) {
         Budget budget = getUserBudgetById(user, budgetId);
         budgetRepository.delete(budget);
@@ -190,6 +195,7 @@ public class BudgetService {
     }
 
     // Get a budget summary
+    @Transactional(readOnly = true)
     public BudgetSummary getBudgetSummary(User user, LocalDate period) {
             Integer id = getUserBudgetByPeriod(user, period).getId();
             BigDecimal amount = getUserBudgetByPeriod(user, period).getAmount();

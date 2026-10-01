@@ -111,13 +111,11 @@ public class BudgetService {
         return total;
     }
 
-    // Get total of monthly expenses
-    public BigDecimal getTotalMonthlyExpenses(User user, LocalDate period) {
+    // Get total of recurring expenses
+    public BigDecimal getTotalRecurringExpenses(User user, LocalDate period) {
        LocalDate monthStart = period.withDayOfMonth(1);
        LocalDate monthEnd = period.withDayOfMonth(period.lengthOfMonth());
        BigDecimal total = new BigDecimal("0");
-       BigDecimal currentExpenses = getTotalCurrentExpenses(user, period);
-       total = total.add(currentExpenses);
        List<RecurringExpense> recurringExpenses = recurringExpenseRepository.findByUser(user);
 
        for (RecurringExpense r : recurringExpenses) {
@@ -176,39 +174,43 @@ public class BudgetService {
        return total;
     }
 
-    // Get current remaining budget after expenses
-    public BigDecimal getRemainingCurrentBudget(User user, LocalDate period) {
-        return (getUserBudgetByPeriod(user, period).getAmount()).subtract(getTotalCurrentExpenses(user, period));
+    // Get total of monthly expenses
+    public BigDecimal getTotalMonthlyExpenses(BigDecimal expenses, BigDecimal recurringExpenses) {
+        return expenses.add(recurringExpenses);
     }
 
-    // Get monthly remaining budget after expenses
-    public BigDecimal getRemainingMonthlyBudget(User user, LocalDate period) {
-        return ((getUserBudgetByPeriod(user, period).getAmount()).subtract(getTotalMonthlyExpenses(user, period)));
+    // Get current remaining budget
+    public BigDecimal getRemainingBudget(BigDecimal budget, BigDecimal expenses) {
+        return budget.subtract(expenses);
     }
 
     // Get percentage of budget usage per month
-    public BigDecimal getBudgetPercentage(User user, LocalDate period) {
-        BigDecimal budget = getUserBudgetByPeriod(user, period).getAmount();
-        BigDecimal expenses = getTotalMonthlyExpenses(user, period);
-
+    public BigDecimal getBudgetPercentage(BigDecimal budget, BigDecimal expenses) {
         return expenses.multiply(BigDecimal.valueOf(100)).divide(budget, RoundingMode.HALF_UP);
     }
 
     // Get a budget summary
     @Transactional(readOnly = true)
     public BudgetSummary getBudgetSummary(User user, LocalDate period) {
-            Integer id = getUserBudgetByPeriod(user, period).getId();
-            BigDecimal amount = getUserBudgetByPeriod(user, period).getAmount();
+            Budget budget = getUserBudgetByPeriod(user, period);
+            Integer id = budget.getId();
+            BigDecimal amount = budget.getAmount();
+            BigDecimal currentExpenses =  getTotalCurrentExpenses(user, period);
+            BigDecimal recurringExpenses = getTotalRecurringExpenses(user, period);
+            BigDecimal monthlyExpenses = getTotalMonthlyExpenses(currentExpenses, recurringExpenses);
+            BigDecimal remainingCurrentBudget = getRemainingBudget(amount, currentExpenses);
+            BigDecimal remainingMonthlyBudget = getRemainingBudget(amount, monthlyExpenses);
+            BigDecimal budgetPercentage = getBudgetPercentage(amount, monthlyExpenses);
 
             return new BudgetSummary(
                     id,
                     amount,
                     period,
-                    getTotalCurrentExpenses(user, period),
-                    getTotalMonthlyExpenses(user, period),
-                    getRemainingCurrentBudget(user, period),
-                    getRemainingMonthlyBudget(user, period),
-                    getBudgetPercentage(user, period)
+                    currentExpenses,
+                    monthlyExpenses,
+                    remainingCurrentBudget,
+                    remainingMonthlyBudget,
+                    budgetPercentage
             );
     }
 

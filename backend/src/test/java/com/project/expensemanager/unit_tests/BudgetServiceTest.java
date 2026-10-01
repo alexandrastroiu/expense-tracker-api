@@ -142,10 +142,10 @@ public class BudgetServiceTest {
 
         when(expenseRepository.findByUserAndExpenseDateBetween(user, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30)))
                 .thenReturn(List.of(
-                firstExpense,
-                secondExpense,
-                thirdExpense
-        ));
+                        firstExpense,
+                        secondExpense,
+                        thirdExpense
+                ));
 
         BigDecimal result = budgetService.getTotalCurrentExpenses(user, period);
         assertEquals(new BigDecimal("175.75"), result);
@@ -162,56 +162,37 @@ public class BudgetServiceTest {
     }
 
     @Test
-    public void getRemainingCurrentBudget_CalculatesTotal() {
-        LocalDate period = LocalDate.of(2026, 9, 1);
-        Budget budget = new Budget(user, new BigDecimal("1000.00"), LocalDate.of(2026, 9, 1));
-        Expense firstExpense = mock(Expense.class);
-        Expense secondExpense = mock(Expense.class);
+    public void getRemainingBudget_WithCurrentExpenses_CalculatesTotal() {
+        BigDecimal budget = new BigDecimal("1000.00");
+        BigDecimal currentExpenses = new BigDecimal("200.00");
 
-        when(firstExpense.getAmount()).thenReturn(new BigDecimal("150.00"));
-        when(secondExpense.getAmount()).thenReturn(new BigDecimal("50.00"));
-        when(budgetRepository.findByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1))).thenReturn(Optional.of(budget));
-        when(expenseRepository.findByUserAndExpenseDateBetween(user, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))).thenReturn(List.of(firstExpense, secondExpense));
-        BigDecimal result = budgetService.getRemainingCurrentBudget(user, period);
+        BigDecimal result = budgetService.getRemainingBudget(budget, currentExpenses);
         assertEquals(new BigDecimal("800.00"), result);
+        verifyNoInteractions(budgetRepository, expenseRepository, recurringExpenseRepository);
     }
 
     @Test
-    public void getRemainingMonthlyBudget_CalculatesTotal() {
-        LocalDate period = LocalDate.of(2026, 9, 1);
-        Budget budget = new Budget(user, new BigDecimal("1000.00"), LocalDate.of(2026, 9, 1));
+    public void getRemainingBudget_WithMonthlyExpenses_CalculatesTotal() {
+        BigDecimal budget = new BigDecimal("1000.00");
+        BigDecimal currentExpenses = new BigDecimal("250.00");
+        BigDecimal recurringExpenses = new BigDecimal("100.00");
 
-        Expense currentExpense = mock(Expense.class);
-        when(currentExpense.getAmount()).thenReturn(new BigDecimal("250.00"));
+        BigDecimal monthlyExpenses = budgetService.getTotalMonthlyExpenses(currentExpenses, recurringExpenses);
+        assertEquals(new BigDecimal("350.00"), monthlyExpenses);
 
-        RecurringExpense recurringExpense = mock(RecurringExpense.class);
-        when(recurringExpense.getAmount()).thenReturn(new BigDecimal("100.00"));
-        when(recurringExpense.getFrequency()).thenReturn(Frequency.MONTHLY);
-        when(recurringExpense.getStartDate()).thenReturn(LocalDate.of(2026, 1, 15));
-        when(recurringExpense.getEndDate()).thenReturn(null);
-
-        when(budgetRepository.findByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1))).thenReturn(Optional.of(budget));
-        when(expenseRepository.findByUserAndExpenseDateBetween(user, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))).thenReturn(List.of(currentExpense));
-        when(recurringExpenseRepository.findByUser(user)).thenReturn(List.of(recurringExpense));
-        BigDecimal result = budgetService.getRemainingMonthlyBudget(user, period);
+        BigDecimal result = budgetService.getRemainingBudget(budget, monthlyExpenses);
         assertEquals(new BigDecimal("650.00"), result);
-        verify(budgetRepository).findByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1));
-        verify(expenseRepository).findByUserAndExpenseDateBetween(user, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
-        verify(recurringExpenseRepository).findByUser(user);
+        verifyNoInteractions(budgetRepository, expenseRepository, recurringExpenseRepository);
     }
 
     @Test
     public void getBudgetPercentage_CalculatesTotal() {
-        LocalDate period = LocalDate.of(2026, 9, 1);
-        Budget budget = new Budget(user, new BigDecimal("1000.00"), LocalDate.of(2026, 9, 1));
+        BigDecimal budget = new BigDecimal("1000.00");
+        BigDecimal expenses = new BigDecimal("250.00");
 
-        Expense expense = mock(Expense.class);
-        when(expense.getAmount()).thenReturn(new BigDecimal("250.00"));
-        when(budgetRepository.findByUserAndBudgetPeriod(user, LocalDate.of(2026, 9, 1))).thenReturn(Optional.of(budget));
-        when(expenseRepository.findByUserAndExpenseDateBetween(user, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30))).thenReturn(List.of(expense));
-        when(recurringExpenseRepository.findByUser(user)).thenReturn(List.of());
-        BigDecimal result = budgetService.getBudgetPercentage(user, period);
+        BigDecimal result = budgetService.getBudgetPercentage(budget, expenses);
         assertEquals(0, new BigDecimal("25").compareTo(result));
+        verifyNoInteractions(budgetRepository, expenseRepository, recurringExpenseRepository);
     }
 
     // Test update method

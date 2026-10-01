@@ -47,13 +47,13 @@ class BudgetServiceCalculationTest {
                     "Monthly Jan 31 clamps to February, MONTHLY, 2026-01-31, NULL,       2026-02-01, 1.00",
                     "Monthly ends before payment,      MONTHLY, 2026-01-31, 2026-02-15, 2026-02-01, 0.00",
                     "Monthly continues in March,       MONTHLY, 2026-01-31, NULL,       2026-03-01, 1.00",
-                    "Leap anniversary in non-leap year, YEARLY,  2024-02-29, NULL,       2025-02-01, 1.00",
-                    "Leap anniversary in leap year,     YEARLY,  2024-02-29, NULL,       2028-02-01, 1.00",
-                    "Weekly crosses month boundary,     WEEKLY,  2026-01-29, NULL,       2026-02-01, 4.00",
-                    "Daily includes February 29,        DAILY,   2024-02-10, NULL,       2024-02-01, 20.00"
+                    "Leap anniversary in non-leap year, YEARLY, 2024-02-29, NULL,       2025-02-01, 1.00",
+                    "Leap anniversary in leap year,     YEARLY, 2024-02-29, NULL,       2028-02-01, 1.00",
+                    "Weekly crosses month boundary,     WEEKLY, 2026-01-29, NULL,       2026-02-01, 4.00",
+                    "Daily includes February 29,        DAILY,  2024-02-10, NULL,       2024-02-01, 20.00"
             }
     )
-    void getTotalMonthlyExpenses_matchesDocumentCases(
+    void getTotalRecurringExpenses_matchesDocumentCases(
             String description,
             Frequency frequency,
             LocalDate start,
@@ -61,16 +61,17 @@ class BudgetServiceCalculationTest {
             LocalDate period,
             String expected
     ) {
-        stubExpenses(
-                period,
-                List.of(),
-                List.of(recurring(frequency, start, end, "1.00"))
+        when(recurringExpenseRepository.findByUser(user))
+                .thenReturn(List.of(
+                        recurring(frequency, start, end, "1.00")
+                ));
+
+        assertMoney(
+                expected,
+                budgetService.getTotalRecurringExpenses(user, period)
         );
 
-        BigDecimal actual =
-                budgetService.getTotalMonthlyExpenses(user, period);
-
-        assertMoney(expected, actual);
+        verifyNoInteractions(expenseRepository, budgetRepository);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -99,7 +100,7 @@ class BudgetServiceCalculationTest {
                     "Yearly preserves leap anniversary,   YEARLY,  2024-02-29, 2028-02-28, 2028-02-01, 0.00"
             }
     )
-    void getTotalMonthlyExpenses_handlesRecurrenceBoundaries(
+    void getTotalRecurringExpenses_handlesRecurrenceBoundaries(
             String description,
             Frequency frequency,
             LocalDate start,
@@ -107,45 +108,124 @@ class BudgetServiceCalculationTest {
             LocalDate period,
             String expected
     ) {
-        stubExpenses(
-                period,
-                List.of(),
-                List.of(recurring(frequency, start, end, "1.00"))
-        );
+        when(recurringExpenseRepository.findByUser(user))
+                .thenReturn(List.of(
+                        recurring(frequency, start, end, "1.00")
+                ));
 
         assertMoney(
                 expected,
-                budgetService.getTotalMonthlyExpenses(user, period)
+                budgetService.getTotalRecurringExpenses(user, period)
         );
+
+        verifyNoInteractions(expenseRepository, budgetRepository);
     }
 
     @Test
-    void getTotalMonthlyExpenses_noExpenses_returnsZero() {
-        LocalDate period = LocalDate.of(2026, 2, 1);
-        stubExpenses(period, List.of(), List.of());
+    void getTotalRecurringExpenses_noExpenses_returnsZero() {
+        when(recurringExpenseRepository.findByUser(user))
+                .thenReturn(List.of());
 
         assertMoney(
                 "0.00",
-                budgetService.getTotalMonthlyExpenses(user, period)
+                budgetService.getTotalRecurringExpenses(
+                        user, LocalDate.of(2026, 2, 1)
+                )
         );
+
+        verifyNoInteractions(expenseRepository, budgetRepository);
     }
 
     @Test
-    void getTotalMonthlyExpenses_combinesRegularAndAllRecurringFrequencies() {
-        LocalDate period = LocalDate.of(2026, 2, 17);
-        stubMixedExpenses(period);
+    void getTotalRecurringExpenses_combinesAllFrequencies() {
+        when(recurringExpenseRepository.findByUser(user))
+                .thenReturn(mixedRecurringExpenses());
 
         assertMoney(
-                "45.64",
-                budgetService.getTotalMonthlyExpenses(user, period)
+                "30.29",
+                budgetService.getTotalRecurringExpenses(
+                        user, LocalDate.of(2026, 2, 17)
+                )
         );
 
-        verify(expenseRepository).findByUserAndExpenseDateBetween(
-                user,
-                LocalDate.of(2026, 2, 1),
-                LocalDate.of(2026, 2, 28)
-        );
         verify(recurringExpenseRepository).findByUser(user);
+        verifyNoInteractions(expenseRepository, budgetRepository);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "15.35, 30.29, 45.64",
+            "0.00,  30.29, 30.29",
+            "15.35, 0.00,  15.35",
+            "0.00,  0.00,  0.00"
+    })
+    void getTotalMonthlyExpenses_combinesSuppliedTotals(
+            BigDecimal currentExpenses,
+            BigDecimal recurringExpenses,
+            String expected
+    ) {
+        assertMoney(
+                expected,
+                budgetService.getTotalMonthlyExpenses(
+                        currentExpenses, recurringExpenses
+                )
+        );
+
+        verifyNoInteractions(
+                budgetRepository,
+                expenseRepository,
+                recurringExpenseRepository
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "100.00, 45.64, 54.36",
+            "100.00, 0.00,  100.00",
+            "100.00, 100.00, 0.00",
+            "20.00,  45.64, -25.64"
+    })
+    void getRemainingBudget_subtractsExpenses(
+            BigDecimal budget,
+            BigDecimal expenses,
+            String expected
+    ) {
+        assertMoney(
+                expected,
+                budgetService.getRemainingBudget(budget, expenses)
+        );
+
+        verifyNoInteractions(
+                budgetRepository,
+                expenseRepository,
+                recurringExpenseRepository
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "100.00, 45.64, 45.64",
+            "100.00, 0.00,  0.00",
+            "100.00, 100.00, 100.00",
+            "20.00,  45.64, 228.20",
+            "3.00,   1.00,  33.33",
+            "6.00,   1.00,  16.67"
+    })
+    void getBudgetPercentage_calculatesAndRounds(
+            BigDecimal budget,
+            BigDecimal expenses,
+            String expected
+    ) {
+        assertMoney(
+                expected,
+                budgetService.getBudgetPercentage(budget, expenses)
+        );
+
+        verifyNoInteractions(
+                budgetRepository,
+                expenseRepository,
+                recurringExpenseRepository
+        );
     }
 
     @Test
@@ -177,6 +257,8 @@ class BudgetServiceCalculationTest {
                         "45.64", summary.budgetPercentage()
                 )
         );
+
+        verifySummaryQueriesOnce(period);
     }
 
     @Test
@@ -199,41 +281,73 @@ class BudgetServiceCalculationTest {
                         "228.20", summary.budgetPercentage()
                 )
         );
+
+        verifySummaryQueriesOnce(period);
     }
 
-    // Helper methods
+    @Test
+    void getBudgetSummary_noExpenses_returnsFullBudget() {
+        LocalDate period = LocalDate.of(2026, 2, 1);
+        stubBudget(period, "100.00");
+        stubExpenses(period, List.of(), List.of());
+
+        BudgetSummary summary =
+                budgetService.getBudgetSummary(user, period);
+
+        assertAll(
+                () -> assertMoney(
+                        "0.00", summary.totalCurrentExpenses()
+                ),
+                () -> assertMoney(
+                        "0.00", summary.totalMonthlyExpenses()
+                ),
+                () -> assertMoney(
+                        "100.00", summary.remainingCurrentBudget()
+                ),
+                () -> assertMoney(
+                        "100.00", summary.remainingMonthlyBudget()
+                ),
+                () -> assertMoney(
+                        "0.00", summary.budgetPercentage()
+                )
+        );
+
+        verifySummaryQueriesOnce(period);
+    }
+
     private void stubMixedExpenses(LocalDate period) {
         stubExpenses(
                 period,
-                List.of(
-                        expense("10.10"),
-                        expense("5.25")
+                List.of(expense("10.10"), expense("5.25")),
+                mixedRecurringExpenses()
+        );
+    }
+
+    private List<RecurringExpense> mixedRecurringExpenses() {
+        return List.of(
+                recurring(
+                        Frequency.DAILY,
+                        LocalDate.of(2026, 2, 10),
+                        LocalDate.of(2026, 2, 12),
+                        "0.10"
                 ),
-                List.of(
-                        recurring(
-                                Frequency.DAILY,
-                                LocalDate.of(2026, 2, 10),
-                                LocalDate.of(2026, 2, 12),
-                                "0.10"
-                        ),
-                        recurring(
-                                Frequency.WEEKLY,
-                                LocalDate.of(2026, 1, 29),
-                                null,
-                                "2.50"
-                        ),
-                        recurring(
-                                Frequency.MONTHLY,
-                                LocalDate.of(2026, 1, 31),
-                                null,
-                                "7.99"
-                        ),
-                        recurring(
-                                Frequency.YEARLY,
-                                LocalDate.of(2024, 2, 29),
-                                null,
-                                "12.00"
-                        )
+                recurring(
+                        Frequency.WEEKLY,
+                        LocalDate.of(2026, 1, 29),
+                        null,
+                        "2.50"
+                ),
+                recurring(
+                        Frequency.MONTHLY,
+                        LocalDate.of(2026, 1, 31),
+                        null,
+                        "7.99"
+                ),
+                recurring(
+                        Frequency.YEARLY,
+                        LocalDate.of(2024, 2, 29),
+                        null,
+                        "12.00"
                 )
         );
     }
@@ -265,6 +379,26 @@ class BudgetServiceCalculationTest {
         )).thenReturn(Optional.of(budget));
     }
 
+    private void verifySummaryQueriesOnce(LocalDate period) {
+        LocalDate monthStart = period.withDayOfMonth(1);
+        LocalDate monthEnd =
+                period.withDayOfMonth(period.lengthOfMonth());
+
+        verify(budgetRepository).findByUserAndBudgetPeriod(
+                user, monthStart
+        );
+        verify(expenseRepository).findByUserAndExpenseDateBetween(
+                user, monthStart, monthEnd
+        );
+        verify(recurringExpenseRepository).findByUser(user);
+
+        verifyNoMoreInteractions(
+                budgetRepository,
+                expenseRepository,
+                recurringExpenseRepository
+        );
+    }
+
     private RecurringExpense recurring(
             Frequency frequency,
             LocalDate start,
@@ -289,10 +423,7 @@ class BudgetServiceCalculationTest {
         return expense;
     }
 
-    private static void assertMoney(
-            String expected,
-            BigDecimal actual
-    ) {
+    private static void assertMoney(String expected, BigDecimal actual) {
         assertNotNull(actual);
         assertEquals(
                 0,

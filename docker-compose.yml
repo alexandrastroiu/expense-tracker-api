@@ -10,8 +10,6 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data
-      - ./database/database_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro   # Run DDL script to create tables
-      - ./database/sample_data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro         # Run to insert sample data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s

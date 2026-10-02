@@ -15,7 +15,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.MountableFile;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
@@ -41,14 +40,7 @@ class ExpenseManagerIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer postgres =
-            new PostgreSQLContainer("postgres:17")
-                    .withCopyFileToContainer(
-                            MountableFile.forClasspathResource(
-                                    "database/database_schema.sql"
-                            ),
-                            "/docker-entrypoint-initdb.d/01-schema.sql"
-                    );
+    static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17");
 
     @Autowired
     private MockMvc mvc;

@@ -56,7 +56,7 @@ public class RecurringExpenseService {
         recurringExpense.setTitle(updatedRecurringExpense.getTitle());
         recurringExpense.setDescription(updatedRecurringExpense.getDescription());
         recurringExpense.setAmount(updatedRecurringExpense.getAmount());
-        recurringExpense.setCategory(updatedRecurringExpense.getCategory());
+        recurringExpense.setCategory(category);
         recurringExpense.setStartDate(updatedRecurringExpense.getStartDate());
         recurringExpense.setEndDate(updatedRecurringExpense.getEndDate());
         recurringExpense.setFrequency(updatedRecurringExpense.getFrequency());
@@ -139,11 +139,8 @@ public class RecurringExpenseService {
             BigDecimal maxAmount,
             Pageable pageable
     ) {
-        if (minAmount != null && maxAmount != null
-                && minAmount.compareTo(maxAmount) > 0) {
-            throw new InvalidRequestException(
-                    "Minimum amount cannot be greater than maximum amount."
-            );
+        if (isInvalidAmount(minAmount, maxAmount)) {
+            throw new InvalidRequestException("Minimum amount cannot be greater than maximum amount.");
         }
 
         Specification<RecurringExpense> criteria = (root, query, cb) -> {
@@ -176,10 +173,14 @@ public class RecurringExpenseService {
     recurringExpenseRepository.delete(recurringExpense);
     }
 
-    // Helper method
+    // Helper methods
     private void validateDate(LocalDate endDate, LocalDate startDate) {
-        if (endDate != null && endDate.isBefore(startDate)) {
+        if (startDate!= null && endDate != null && endDate.isBefore(startDate)) {
             throw new InvalidRequestException("End date cannot be before start date.");
         }
+    }
+
+    private boolean isInvalidAmount(BigDecimal minAmount, BigDecimal maxAmount) {
+        return (minAmount != null && maxAmount != null && minAmount.compareTo(maxAmount) > 0);
     }
 }

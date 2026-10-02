@@ -129,15 +129,12 @@ public class ExpenseService {
             LocalDate end,
             Pageable pageable
     ) {
-        if (start != null && end != null && end.isBefore(start)) {
+        if (isInvalidDate(start, end)) {
             throw new InvalidRequestException("End date cannot be before start date.");
         }
 
-        if (minAmount != null && maxAmount != null
-                && minAmount.compareTo(maxAmount) > 0) {
-            throw new InvalidRequestException(
-                    "Minimum amount cannot be greater than maximum amount."
-            );
+        if (isInvalidAmount(minAmount, maxAmount)) {
+            throw new InvalidRequestException("Minimum amount cannot be greater than maximum amount.");
         }
 
         if (categoryId != null && !categoryRepository.existsById(categoryId)) {
@@ -204,15 +201,11 @@ public class ExpenseService {
     }
 
     // Helper methods
-    private void validateDate(LocalDate endDate, LocalDate startDate) {
-        if (endDate != null && endDate.isBefore(startDate)) {
-            throw new InvalidRequestException("End date cannot be before start date");
-        }
+    private boolean isInvalidDate(LocalDate startDate, LocalDate endDate) {
+        return (startDate != null && endDate != null && endDate.isBefore(startDate));
     }
 
-    private void validateAmount(BigDecimal minAmount, BigDecimal maxAmount) {
-        if (minAmount != null && maxAmount != null && minAmount.compareTo(maxAmount) > 0) {
-            throw new InvalidRequestException("Minimum amount cannot be greater than maximum amount");
-        }
+    private boolean isInvalidAmount(BigDecimal minAmount, BigDecimal maxAmount) {
+        return (minAmount != null && maxAmount != null && minAmount.compareTo(maxAmount) > 0);
     }
 }

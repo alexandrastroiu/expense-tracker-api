@@ -10,6 +10,7 @@ import com.project.expensemanager.mapper.ExpenseMapper;
 import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.ExpenseService;
 import com.project.expensemanager.service.UserService;
+import com.project.expensemanager.validation.SortValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Set;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Expenses", description = "Manage user expenses")
@@ -46,6 +48,12 @@ public class ExpenseController {
     private final UserService userService;
     private final CategoryService categoryService;
     private final ExpenseMapper expenseMapper;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "id",
+            "title",
+            "amount",
+            "expenseDate"
+    );
 
     public ExpenseController(ExpenseService expenseService, UserService userService, CategoryService categoryService, ExpenseMapper expenseMapper) {
         this.expenseService = expenseService;
@@ -85,13 +93,27 @@ public class ExpenseController {
     // Pagination
     @Operation(
             summary = "Get all expenses",
-            description = "Returns all expenses belonging to the authenticated user."
+            description = """
+                Returns expenses belonging to the authenticated user.
+
+                Supports pagination using page and size.
+
+                Allowed sort fields: id, title, amount, expenseDate.
+                Use sort=field,asc or sort=field,desc.
+                Repeat sort to order by multiple fields.
+
+                Example: ?sort=amount,asc&sort=id,desc
+
+                Default order: expenseDate descending, then id descending.
+                Unsupported sort fields return 400 Bad Request.
+                """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", useReturnTypeSchema = true)
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", useReturnTypeSchema = true),
+            @ApiResponse(responseCode = "400", description = "Unsupported sort field", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public ResponseEntity<Page<ExpenseResponse>> getAllRecurringExpenses(
+    public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
             Authentication authentication,
             @ParameterObject
             @PageableDefault(
@@ -100,6 +122,7 @@ public class ExpenseController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<Expense> expenses = expenseService.getExpensesForUser(user, pageable);
@@ -134,11 +157,24 @@ public class ExpenseController {
     // Pagination
     @Operation(
             summary = "Filter expenses",
-            description = "Returns  expenses belonging to the authenticated user filtered by criteria."
+            description = """
+                    Returns  expenses belonging to the authenticated user filtered by criteria.
+                    
+                    Supports pagination using page and size.
+
+                    Allowed sort fields: id, title, amount, expenseDate.
+                    Use sort=field,asc or sort=field,desc.
+                    Repeat sort to order by multiple fields.
+    
+                    Example: ?sort=amount,asc&sort=id,desc
+    
+                    Default order: expenseDate descending, then id descending.
+                    Unsupported sort fields return 400 Bad Request.
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully",  useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Filtering criteria is invalid", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid filtering criteria or unsupported sort field", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/filter")
@@ -156,6 +192,7 @@ public class ExpenseController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
             ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<Expense> filteredExpenses = expenseService.filterExpenses(user, categoryId, minAmount, maxAmount, start, end, pageable);
@@ -168,10 +205,24 @@ public class ExpenseController {
     // Pagination
     @Operation(
              summary = "Search expenses",
-             description = "Returns the authenticated user's expenses that match the specified search criteria."
+             description = """
+                    Returns the authenticated user's expenses that match the specified search criteria.
+                    
+                    Supports pagination using page and size.
+
+                    Allowed sort fields: id, title, amount, expenseDate.
+                    Use sort=field,asc or sort=field,desc.
+                    Repeat sort to order by multiple fields.
+    
+                    Example: ?sort=amount,asc&sort=id,desc
+    
+                    Default order: expenseDate descending, then id descending.
+                    Unsupported sort fields return 400 Bad Request.
+                    """
     )
     @ApiResponses({
              @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", useReturnTypeSchema = true),
+             @ApiResponse(responseCode = "400", description = "Unsupported sort fields or search parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
              @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/search")
@@ -188,6 +239,7 @@ public class ExpenseController {
                 direction = Sort.Direction.DESC
         ) Pageable pageable
     ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<Expense> expenses = expenseService.searchExpenses(

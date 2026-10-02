@@ -18,17 +18,24 @@ import com.project.expensemanager.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.params.provider.Arguments;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -204,5 +211,206 @@ class ControllerTest {
                 expenseMapper,
                 recurringExpenseMapper
         );
+    }
+
+    // Test sorting validation
+    @ParameterizedTest(name = "{0}: rejects {1}")
+    @MethodSource("invalidSortRequests")
+    void unsupportedSortReturns400BeforeCallingServices(
+            String endpoint,
+            String invalidField,
+            MockHttpServletRequestBuilder request
+    ) throws Exception {
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(
+                        "Unsupported sort field: " + invalidField
+                ));
+
+        verifyNoBusinessCalls();
+    }
+
+    static Stream<Arguments> invalidSortRequests() {
+        return paginatedEndpoints().flatMap(endpoint ->
+                Stream.of(
+                        Arguments.of(
+                                endpoint,
+                                "unknownField",
+                                paginatedRequest(endpoint)
+                                        .param("sort", "unknownField,asc")
+                        ),
+                        Arguments.of(
+                                endpoint,
+                                "unknownField",
+                                paginatedRequest(endpoint)
+                                        .param(
+                                                "sort",
+                                                "amount,asc",
+                                                "unknownField,desc"
+                                        )
+                        ),
+                        Arguments.of(
+                                endpoint,
+                                "user.passwordHash",
+                                paginatedRequest(endpoint)
+                                        .param("sort", "user.passwordHash,asc")
+                        )
+                )
+        );
+    }
+
+    @ParameterizedTest(name = "{0}: accepts multiple sort fields")
+    @MethodSource("paginatedEndpoints")
+    void validSortingIsPassedToService(String endpoint) throws Exception {
+        User alice = new User("alice");
+        when(userService.getUserByUsername("alice")).thenReturn(alice);
+
+        switch (endpoint) {
+            case "/api/expenses" ->
+                    when(expenseService.getExpensesForUser(eq(alice), any(Pageable.class))).thenReturn(Page.empty());
+
+            case "/api/expenses/search" ->
+                    when(expenseService.searchExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            any(Pageable.class)
+                    )).thenReturn(Page.empty());
+
+            case "/api/expenses/filter" ->
+                    when(expenseService.filterExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            any(Pageable.class)
+                    )).thenReturn(Page.empty());
+
+            case "/api/recurring-expenses" ->
+                    when(recurringExpenseService.getAllUserRecurringExpenses(
+                            eq(alice), any(Pageable.class)
+                    )).thenReturn(Page.empty());
+
+            case "/api/recurring-expenses/search" ->
+                    when(recurringExpenseService.searchRecurringExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            any(Pageable.class)
+                    )).thenReturn(Page.empty());
+
+            case "/api/recurring-expenses/filter" ->
+                    when(recurringExpenseService.filterRecurringExpensesByAmount(
+                            eq(alice),
+                            any(java.math.BigDecimal.class),
+                            any(java.math.BigDecimal.class),
+                            any(Pageable.class)
+                    )).thenReturn(Page.empty());
+
+            default -> throw new IllegalArgumentException(
+                    "Unexpected endpoint: " + endpoint
+            );
+        }
+
+        mvc.perform(paginatedRequest(endpoint)
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "amount,asc", "id,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
+
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+
+        switch (endpoint) {
+            case "/api/expenses" ->
+                    verify(expenseService).getExpensesForUser(eq(alice), captor.capture());
+
+            case "/api/expenses/search" ->
+                    verify(expenseService).searchExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            captor.capture()
+                    );
+
+            case "/api/expenses/filter" ->
+                    verify(expenseService).filterExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            captor.capture()
+                    );
+
+            case "/api/recurring-expenses" ->
+                    verify(recurringExpenseService).getAllUserRecurringExpenses(eq(alice), captor.capture());
+
+            case "/api/recurring-expenses/search" ->
+                    verify(recurringExpenseService).searchRecurringExpenses(
+                            eq(alice),
+                            isNull(),
+                            isNull(),
+                            isNull(),
+                            captor.capture()
+                    );
+
+            case "/api/recurring-expenses/filter" ->
+                    verify(recurringExpenseService).filterRecurringExpensesByAmount(
+                            eq(alice),
+                            any(java.math.BigDecimal.class),
+                            any(java.math.BigDecimal.class),
+                            captor.capture()
+                    );
+
+            default -> throw new IllegalArgumentException("Unexpected endpoint: " + endpoint);
+        }
+
+        Pageable pageable = captor.getValue();
+
+        assertEquals(1, pageable.getPageNumber());
+        assertEquals(5, pageable.getPageSize());
+        assertEquals(
+                List.of(
+                        Sort.Order.asc("amount"),
+                        Sort.Order.desc("id")
+                ),
+                pageable.getSort().toList()
+        );
+    }
+
+    static Stream<String> paginatedEndpoints() {
+        return Stream.of(
+                "/api/expenses",
+                "/api/expenses/search",
+                "/api/expenses/filter",
+                "/api/recurring-expenses",
+                "/api/recurring-expenses/search",
+                "/api/recurring-expenses/filter"
+        );
+    }
+
+    private static MockHttpServletRequestBuilder paginatedRequest(
+            String endpoint
+    ) {
+        MockHttpServletRequestBuilder request = get(endpoint);
+
+        if (endpoint.equals("/api/recurring-expenses/filter")) {
+            request.param("minAmount", "10");
+            request.param("maxAmount", "100");
+        }
+
+        return request;
     }
 }

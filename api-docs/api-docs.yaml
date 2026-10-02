@@ -331,7 +331,17 @@ paths:
       tags:
       - Recurring Expenses
       summary: Get all recurring expenses
-      description: Returns all recurring expenses belonging to the authenticated user.
+      description: |
+        Returns all recurring expenses belonging to the authenticated user.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Default order: startDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
       operationId: getAllRecurringExpenses
       parameters:
       - name: page
@@ -369,6 +379,12 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PageRecurringExpenseResponse"
+        "400":
+          description: Unsupported sort field
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Missing, invalid, or expired bearer token"
       security:
@@ -413,8 +429,20 @@ paths:
       tags:
       - Expenses
       summary: Get all expenses
-      description: Returns all expenses belonging to the authenticated user.
-      operationId: getAllRecurringExpenses_1
+      description: |
+        Returns expenses belonging to the authenticated user.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, expenseDate.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Example: ?sort=amount,asc&sort=id,desc
+
+        Default order: expenseDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
+      operationId: getAllExpenses
       parameters:
       - name: page
         in: query
@@ -451,6 +479,12 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PageExpenseResponse"
+        "400":
+          description: Unsupported sort field
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: "Missing, invalid, or expired bearer token"
       security:
@@ -625,8 +659,17 @@ paths:
       tags:
       - Recurring Expenses
       summary: Search recurring expenses
-      description: Returns the authenticated user's recurring expenses that match
-        the specified search criteria.
+      description: |
+        Returns the authenticated user's recurring expenses that match the specified search criteria.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Default order: startDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
       operationId: searchRecurringExpenses
       parameters:
       - name: title
@@ -685,6 +728,12 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PageRecurringExpenseResponse"
+        "400":
+          description: Invalid search criteria or unsupported sort field
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Category not found
           content:
@@ -700,8 +749,17 @@ paths:
       tags:
       - Recurring Expenses
       summary: Filter recurring expenses
-      description: Returns the authenticated user's recurring expenses that match
-        the specified filter criteria.
+      description: |
+        Returns the authenticated user's recurring expenses that match the specified filter criteria.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Default order: startDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
       operationId: filterRecurringExpenses
       parameters:
       - name: minAmount
@@ -750,7 +808,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/PageRecurringExpenseResponse"
         "400":
-          description: Invalid filtering criteria
+          description: Invalid filtering criteria or unsupported sort field
           content:
             '*/*':
               schema:
@@ -764,8 +822,19 @@ paths:
       tags:
       - Expenses
       summary: Search expenses
-      description: Returns the authenticated user's expenses that match the specified
-        search criteria.
+      description: |
+        Returns the authenticated user's expenses that match the specified search criteria.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, expenseDate.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Example: ?sort=amount,asc&sort=id,desc
+
+        Default order: expenseDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
       operationId: searchExpenses
       parameters:
       - name: title
@@ -825,6 +894,12 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PageExpenseResponse"
+        "400":
+          description: Unsupported sort fields or search parameters
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Category not found
           content:
@@ -840,8 +915,19 @@ paths:
       tags:
       - Expenses
       summary: Filter expenses
-      description: Returns  expenses belonging to the authenticated user filtered
-        by criteria.
+      description: |
+        Returns  expenses belonging to the authenticated user filtered by criteria.
+
+        Supports pagination using page and size.
+
+        Allowed sort fields: id, title, amount, expenseDate.
+        Use sort=field,asc or sort=field,desc.
+        Repeat sort to order by multiple fields.
+
+        Example: ?sort=amount,asc&sort=id,desc
+
+        Default order: expenseDate descending, then id descending.
+        Unsupported sort fields return 400 Bad Request.
       operationId: filterExpenses
       parameters:
       - name: categoryId
@@ -908,7 +994,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/PageExpenseResponse"
         "400":
-          description: Filtering criteria is invalid
+          description: Invalid filtering criteria or unsupported sort field
           content:
             '*/*':
               schema:

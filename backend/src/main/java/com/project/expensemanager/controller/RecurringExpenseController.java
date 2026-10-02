@@ -11,6 +11,7 @@ import com.project.expensemanager.mapper.RecurringExpenseMapper;
 import com.project.expensemanager.service.CategoryService;
 import com.project.expensemanager.service.RecurringExpenseService;
 import com.project.expensemanager.service.UserService;
+import com.project.expensemanager.validation.SortValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Recurring Expenses", description = "Manage user recurring expenses")
@@ -46,6 +48,14 @@ public class RecurringExpenseController {
     private final RecurringExpenseService recurringExpenseService;
     private final CategoryService categoryService;
     private final RecurringExpenseMapper recurringExpenseMapper;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "id",
+            "title",
+            "amount",
+            "startDate",
+            "endDate",
+            "frequency"
+    );
 
     public RecurringExpenseController(UserService userService, RecurringExpenseService recurringExpenseService, CategoryService categoryService, RecurringExpenseMapper recurringExpenseMapper) {
         this.userService = userService;
@@ -109,10 +119,22 @@ public class RecurringExpenseController {
     // Pagination
     @Operation(
             summary = "Get all recurring expenses",
-            description = "Returns all recurring expenses belonging to the authenticated user."
+            description = """
+                    Returns all recurring expenses belonging to the authenticated user.
+                    
+                    Supports pagination using page and size.
+                    
+                    Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+                    Use sort=field,asc or sort=field,desc.
+                    Repeat sort to order by multiple fields.
+                    
+                    Default order: startDate descending, then id descending.
+                    Unsupported sort fields return 400 Bad Request.
+                    """
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully", useReturnTypeSchema = true)
+            @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully", useReturnTypeSchema = true),
+            @ApiResponse(responseCode = "400", description = "Unsupported sort field", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public ResponseEntity<Page<RecurringExpenseResponse>> getAllRecurringExpenses(
@@ -124,6 +146,7 @@ public class RecurringExpenseController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<RecurringExpense> expenses = recurringExpenseService.getAllUserRecurringExpenses(user, pageable);
@@ -158,10 +181,22 @@ public class RecurringExpenseController {
     // Pagination
     @Operation(
             summary = "Search recurring expenses",
-            description = "Returns the authenticated user's recurring expenses that match the specified search criteria."
+            description = """
+                    Returns the authenticated user's recurring expenses that match the specified search criteria.
+                    
+                    Supports pagination using page and size.
+                    
+                    Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+                    Use sort=field,asc or sort=field,desc.
+                    Repeat sort to order by multiple fields.
+                    
+                    Default order: startDate descending, then id descending.
+                    Unsupported sort fields return 400 Bad Request.
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Recurring expenses retrieved successfully",  useReturnTypeSchema = true),
+            @ApiResponse(responseCode = "400", description = "Invalid search criteria or unsupported sort field", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Category not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/search")
@@ -177,6 +212,7 @@ public class RecurringExpenseController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<RecurringExpense> expenses = recurringExpenseService.searchRecurringExpenses(
@@ -195,11 +231,22 @@ public class RecurringExpenseController {
     // Pagination
     @Operation(
             summary = "Filter recurring expenses",
-            description = "Returns the authenticated user's recurring expenses that match the specified filter criteria."
+            description = """
+                    Returns the authenticated user's recurring expenses that match the specified filter criteria.
+                    
+                    Supports pagination using page and size.
+                    
+                    Allowed sort fields: id, title, amount, startDate, endDate, frequency.
+                    Use sort=field,asc or sort=field,desc.
+                    Repeat sort to order by multiple fields.
+                    
+                    Default order: startDate descending, then id descending.
+                    Unsupported sort fields return 400 Bad Request.
+                    """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Recurring expense retrieved successfully", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "400", description = "Invalid filtering criteria", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid filtering criteria or unsupported sort field", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
     @GetMapping("/filter")
     public ResponseEntity<Page<RecurringExpenseResponse>> filterRecurringExpenses (
@@ -213,6 +260,7 @@ public class RecurringExpenseController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
+        SortValidator.validate(pageable, ALLOWED_SORT_FIELDS);
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         Page<RecurringExpense> expenses = recurringExpenseService.filterRecurringExpensesByAmount(user, minAmount, maxAmount, pageable);

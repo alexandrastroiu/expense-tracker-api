@@ -186,7 +186,7 @@ public class BudgetService {
 
     // Get percentage of budget usage per month
     public BigDecimal getBudgetPercentage(BigDecimal budget, BigDecimal expenses) {
-        return expenses.multiply(BigDecimal.valueOf(100)).divide(budget, RoundingMode.HALF_UP);
+        return expenses.multiply(BigDecimal.valueOf(100)).divide(budget, 2, RoundingMode.HALF_UP);
     }
 
     // Get a budget summary
@@ -194,6 +194,7 @@ public class BudgetService {
     public BudgetSummary getBudgetSummary(User user, LocalDate period) {
             Budget budget = getUserBudgetByPeriod(user, period);
             Integer id = budget.getId();
+            LocalDate summaryPeriod = budget.getBudgetPeriod();
             BigDecimal amount = budget.getAmount();
             BigDecimal currentExpenses =  getTotalCurrentExpenses(user, period);
             BigDecimal recurringExpenses = getTotalRecurringExpenses(user, period);
@@ -205,7 +206,7 @@ public class BudgetService {
             return new BudgetSummary(
                     id,
                     amount,
-                    period,
+                    summaryPeriod,
                     currentExpenses,
                     monthlyExpenses,
                     remainingCurrentBudget,

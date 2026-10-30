@@ -1,5 +1,5 @@
 import { ACCOUNT_CURRENCIES, type UserProfile } from "./types";
-const SESSION_KEY = "ledger.session";
+const SESSION_KEY = "spendly.session";
 export interface Session {
   token: string;
   username: string;

@@ -351,7 +351,8 @@ class ExpenseManagerIntegrationTest {
                                   "firstName": "Test",
                                   "lastName": "User",
                                   "password": "%s",
-                                  "email": "%s@example.com"
+                                  "email": "%s@example.com",
+                                  "currency": "EUR"
                                 }
                                 """.formatted(username, PASSWORD, username)))
                 .andExpect(status().isCreated());

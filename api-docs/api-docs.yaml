@@ -10,6 +10,8 @@ tags:
   description: Manage user budgets
 - name: Expenses
   description: Manage user expenses
+- name: User Profile
+  description: User Profile
 - name: Authentication
   description: Authentication
 - name: Categories
@@ -654,6 +656,31 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/users/profile:
+    get:
+      tags:
+      - User Profile
+      summary: Get current user profile
+      description: Retrieves the username and preferred currency of the authenticated
+        user.
+      operationId: getCurrentUserProfile
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+        "404":
+          description: User not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+        "401":
+          description: "Missing, invalid, or expired bearer token"
+      security:
+      - bearerAuth: []
   /api/recurring-expenses/search:
     get:
       tags:
@@ -1244,7 +1271,22 @@ components:
           format: email
           maxLength: 100
           minLength: 0
+        currency:
+          type: string
+          enum:
+          - RON
+          - EUR
+          - USD
+          - GBP
+          - CAD
+          - AUD
+          - CHF
+          - JPY
+          - PLN
+          - BGN
+          - HUF
       required:
+      - currency
       - email
       - firstName
       - lastName
@@ -1270,6 +1312,25 @@ components:
       properties:
         token:
           type: string
+    UserProfileResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        currency:
+          type: string
+          enum:
+          - RON
+          - EUR
+          - USD
+          - GBP
+          - CAD
+          - AUD
+          - CHF
+          - JPY
+          - PLN
+          - BGN
+          - HUF
     PageRecurringExpenseResponse:
       type: object
       properties:

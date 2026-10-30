@@ -35,7 +35,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\",\n    \"currency\": \"EUR\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -88,7 +88,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user1\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user1\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\",\n    \"currency\": \"EUR\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -141,7 +141,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\"\n}",
+              "raw": "{\n    \"username\": \"test_user\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"password\": \"user1234!\",\n    \"email\": \"johnsmith@gmail.com\",\n    \"currency\": \"EUR\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2942,6 +2942,66 @@
                 "api",
                 "budgets",
                 "{{budgetId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "pm.test(\"Response contains user information\", function () {",
+                  "    pm.expect(response).to.have.property(\"username\");",
+                  "    pm.expect(response).to.have.property(\"currency\");",
+                  "}); ",
+                  "",
+                  "pm.test(\"User information is not empty\", function () {",
+                  "    pm.expect(response.username).to.not.be.empty;",
+                  "    pm.expect(response.currency).to.not.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "profile"
               ]
             }
           },

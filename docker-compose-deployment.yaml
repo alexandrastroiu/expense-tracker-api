@@ -1,0 +1,55 @@
+services:
+  database:
+    image: postgres:17
+    container_name: expense_manager_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: ${DOCKERHUB_USERNAME}/expense-manager-backend:latest
+    container_name: expense_manager_backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    container_name: expense_manager_frontend
+    image: ${DOCKERHUB_USERNAME}/expense-manager-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  database_data:

@@ -1,0 +1,53 @@
+name: CD workflow
+
+on:
+  workflow_run:
+    workflows:
+      - CI workflow
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read    # read permissions for the Github repository
+
+jobs:
+  publish-images:
+    if: github.event.workflow_run.conclusion == "success" && github.event.workflow_run.event == "push"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and push images to Dockerhub
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/expense-manager-backend:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/expense-manager-backend:${{ github.event.workflow_run.head_sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/expense-manager-frontend:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/expense-manager-frontend:${{ github.event.workflow_run.head_sha }}

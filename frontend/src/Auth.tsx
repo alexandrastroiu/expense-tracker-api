@@ -1,3 +1,4 @@
+import { ACCOUNT_CURRENCIES } from "./types";
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
@@ -10,7 +11,7 @@ export function Brand() {
   return (
     <div className="brand">
       <span className="brand-mark">
-        S<span>↗</span>
+        S<span></span>
       </span>
       spendly<span className="brand-dot">.</span>
     </div>
@@ -176,6 +177,18 @@ export default function Auth({
                     maxLength={100}
                     autoComplete="email"
                   />
+                </label>
+              )}
+              {register && (
+                <label>
+                  Account currency
+                  <select name="currency" required defaultValue="">
+                    <option value="" disabled>Choose a currency</option>
+                    {ACCOUNT_CURRENCIES.map((currency) => (
+                      <option key={currency} value={currency}>{currency}</option>
+                    ))}
+                  </select>
+                  <small>Used for all expenses, recurring payments, and budgets.</small>
                 </label>
               )}
               <label>

@@ -33,3 +33,12 @@ export interface Summary extends Budget {
   remainingMonthlyBudget: number;
   budgetPercentage: number;
 }
+
+export const ACCOUNT_CURRENCIES = [
+  "RON", "EUR", "USD", "GBP", "CAD", "AUD", "CHF", "JPY", "PLN", "BGN", "HUF",
+] as const;
+export type AccountCurrency = (typeof ACCOUNT_CURRENCIES)[number];
+export interface UserProfile {
+  username: string;
+  currency: AccountCurrency;
+}

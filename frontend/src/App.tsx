@@ -23,14 +23,16 @@ import Auth, { Brand } from "./Auth";
 import Editor, { Modal, today } from "./Editor";
 import {
   ApiError,
+  getUserProfile,
   listPath,
   readSession,
   request,
   saveSession,
   type Session,
 } from "./api";
-import type { Budget, Category, Expense, Page, Summary } from "./types";
-const money = (value: number) =>
+import type { Budget, Category, Expense, Page, Summary, AccountCurrency, UserProfile } from "./types";
+import { currencyFormatter } from "./currency";
+const decimal = (value: number) =>
   new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -93,7 +95,7 @@ export default function App() {
         {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
       </button>
       {session ? (
-        <Workspace key={session.token} session={session} logout={logout} />
+        <ProfileWorkspace key={session.token} session={session} logout={logout} />
       ) : (
         <Auth
           onLogin={(value) => {
@@ -106,13 +108,54 @@ export default function App() {
     </>
   );
 }
+function ProfileWorkspace({ session, logout }: {
+  session: Session;
+  logout: (message?: string) => void;
+}) {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setError("");
+    getUserProfile(session.token, controller.signal)
+      .then((value) => {
+        if (!controller.signal.aborted) setProfile(value);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        if (error instanceof ApiError && error.status === 401) {
+          logout("Your session ended. Please sign in again.");
+        } else {
+          setError(error instanceof Error ? error.message : "Unable to load your account.");
+        }
+      });
+    return () => controller.abort();
+  }, [session.token, logout, attempt]);
+  if (profile) return <Workspace session={session} logout={logout} profile={profile} />;
+  return (
+    <main className="state">
+      <Brand />
+      {error ? (
+        <>
+          <p role="alert">{error}</p>
+          <button className="secondary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>
+        </>
+      ) : <p role="status">Loading your account…</p>}
+      <button className="text-button" onClick={() => logout()}>Log out</button>
+    </main>
+  );
+}
 function Workspace({
+  profile,
   session,
   logout,
 }: {
   session: Session;
   logout: (message?: string) => void;
+  profile: UserProfile;
 }) {
+  const money = currencyFormatter(profile.currency).format;
   const [view, setView] = useState<View>("overview");
   const [period, setPeriod] = useState(today().slice(0, 7));
   const [categories, setCategories] = useState<Category[]>([]);
@@ -290,11 +333,11 @@ function Workspace({
         </div>
         <div className="profile">
           <span className="avatar">
-            {session.username.charAt(0).toUpperCase()}
+            {profile.username.charAt(0).toUpperCase()}
           </span>
           <div>
-            <strong>{session.username}</strong>
-            <small>Personal workspace</small>
+            <strong>{profile.username}</strong>
+            <small>Account currency: {profile.currency}</small>
           </div>
           <button
             className="icon-button"
@@ -380,24 +423,28 @@ function Workspace({
                 <>
                   <div className="stats-grid">
                     <Stat
+                      currency={profile.currency}
                       label="Monthly budget"
                       value={summary.amount}
                       hint="Your plan for the month"
                       icon={<Wallet size={18} />}
                     />
                     <Stat
+                      currency={profile.currency}
                       label="Recorded spending"
                       value={summary.totalCurrentExpenses}
                       hint="Expenses dated this month"
                       icon={<ArrowUpRight size={18} />}
                     />
                     <Stat
+                      currency={profile.currency}
                       label="Estimated spending"
                       value={summary.totalMonthlyExpenses}
                       hint="Including scheduled payments"
                       icon={<Repeat2 size={18} />}
                     />
                     <Stat
+                      currency={profile.currency}
                       label="Estimated remaining"
                       value={summary.remainingMonthlyBudget}
                       hint="After scheduled payments"
@@ -422,7 +469,7 @@ function Workspace({
                     <div className="budget-progress">
                       <div>
                         <strong>
-                          {money(summary.budgetPercentage)}%{" "}
+                          {decimal(summary.budgetPercentage)}%{" "}
                           <span>of budget estimated</span>
                         </strong>
                         <span>
@@ -499,6 +546,7 @@ function Workspace({
           )}
           {view !== "overview" && (
             <FilterBar
+              currency={profile.currency}
               key={view}
               recurring={recurring}
               categories={categories}
@@ -525,7 +573,7 @@ function Workspace({
                   {loading
                     ? "Loading…"
                     : `${data?.totalElements ?? 0} ${recurring ? "payments" : "expenses"}`}{" "}
-                  · Amounts in your chosen currency
+                  · Amounts in {profile.currency}
                 </span>
               </div>
               {view !== "overview" && (
@@ -740,6 +788,7 @@ function Workspace({
       )}
       {editor && (
         <Editor
+          currency={profile.currency}
           item={editor.item}
           recurring={recurring}
           categories={categories}
@@ -786,12 +835,14 @@ function Workspace({
   );
 }
 function Stat({
+  currency,
   label,
   value,
   hint,
   icon,
   accent = false,
 }: {
+  currency: AccountCurrency;
   label: string;
   value: number;
   hint: string;
@@ -804,18 +855,20 @@ function Stat({
         <span>{label}</span>
         {icon}
       </div>
-      <strong className={value < 0 ? "negative" : ""}>{money(value)}</strong>
+      <strong className={value < 0 ? "negative" : ""}>{currencyFormatter(currency).format(value)}</strong>
       <small>{hint}</small>
     </article>
   );
 }
 function FilterBar({
+  currency,
   recurring,
   categories,
   apply,
 }: {
   recurring: boolean;
   categories: Category[];
+  currency: AccountCurrency;
   apply: (values: Record<string, string>) => void;
 }) {
   const [mode, setMode] = useState("search");
@@ -888,7 +941,7 @@ function FilterBar({
         ) : (
           <>
             <label>
-              Min amount
+              Min amount ({currency})
               <input
                 name="minAmount"
                 type="number"
@@ -899,7 +952,7 @@ function FilterBar({
               />
             </label>
             <label>
-              Max amount
+              Max amount ({currency})
               <input
                 name="maxAmount"
                 type="number"

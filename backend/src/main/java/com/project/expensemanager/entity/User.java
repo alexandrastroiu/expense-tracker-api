@@ -24,6 +24,10 @@ public class User {
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency", nullable = false, length = 3)
+    private AccountCurrency currency;
+
     // Default constructor
     protected User() {}
 
@@ -90,5 +94,13 @@ public class User {
 
     public Integer getId() {
         return id;
+    }
+
+    public AccountCurrency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(AccountCurrency currency) {
+        this.currency = currency;
     }
 }

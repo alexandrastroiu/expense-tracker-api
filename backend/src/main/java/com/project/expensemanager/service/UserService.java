@@ -1,5 +1,6 @@
 package com.project.expensemanager.service;
 
+import com.project.expensemanager.dto.user.UserProfileResponse;
 import com.project.expensemanager.entity.User;
 import com.project.expensemanager.exception.ResourceNotFoundException;
 import com.project.expensemanager.repository.UserRepository;
@@ -19,6 +20,15 @@ public class UserService {
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow( () -> new ResourceNotFoundException("User with username " + username + " not found."));
+    }
+
+    public UserProfileResponse getUserProfile(String username) {
+        User user = getUserByUsername(username);
+
+        return new UserProfileResponse(
+                user.getUsername(),
+                user.getCurrency()
+        );
     }
 
 }

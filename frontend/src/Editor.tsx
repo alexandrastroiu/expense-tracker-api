@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { X } from "lucide-react";
-import type { Category, Expense, Budget } from "./types";
+import type { Category, Expense, Budget, AccountCurrency } from "./types";
 export function today() {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -50,6 +50,7 @@ export function Modal({
   );
 }
 export default function Editor({
+  currency,
   item,
   recurring,
   categories,
@@ -58,6 +59,7 @@ export default function Editor({
   close,
   save,
 }: {
+  currency: AccountCurrency;
   item?: Expense;
   recurring: boolean;
   categories: Category[];
@@ -137,7 +139,7 @@ export default function Editor({
           )}
           <div className="form-grid">
             <label>
-              Amount
+              Amount ({currency})
               <input
                 name="amount"
                 type="number"

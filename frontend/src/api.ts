@@ -1,3 +1,4 @@
+import { ACCOUNT_CURRENCIES, type UserProfile } from "./types";
 const SESSION_KEY = "ledger.session";
 export interface Session {
   token: string;
@@ -100,4 +101,12 @@ export function listPath(
         : ["title", "categoryId", "expenseDate", "amount"];
   for (const key of allowed) if (filters[key]) params.set(key, filters[key]);
   return `${base}${allowed.some((key) => filters[key]) ? `/${mode}` : ""}?${params}`;
+}
+
+export async function getUserProfile(token: string, signal?: AbortSignal): Promise<UserProfile> {
+  const profile = await request<UserProfile>("/users/profile", token, { signal });
+  if (!profile || typeof profile.username !== "string" || !ACCOUNT_CURRENCIES.includes(profile.currency)) {
+    throw new Error("Your account currency is missing or unsupported. Please contact support.");
+  }
+  return profile;
 }

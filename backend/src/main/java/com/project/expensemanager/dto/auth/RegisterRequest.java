@@ -1,8 +1,10 @@
 package com.project.expensemanager.dto.auth;
 
+import com.project.expensemanager.entity.AccountCurrency;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
@@ -32,6 +34,9 @@ public record RegisterRequest(
         @NotBlank(message = "Email is required")
         @Email(message = "A valid email address is required")
         @Size(max = 100, message = "Email cannot exceed 100 characters")
-        String email
+        String email,
+
+        @NotNull(message = "Currency is required")
+        AccountCurrency currency
 ) {
 }

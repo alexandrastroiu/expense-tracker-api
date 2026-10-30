@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 public class UserMapper {
     // Map request to entity
     public User mapToEntity(RegisterRequest request) {
-        return new User(request.username(), request.firstName(), request.lastName(), request.email());
+        User user = new User(request.username(), request.firstName(), request.lastName(), request.email());
+        user.setCurrency(request.currency());
+        return user;
     }
 }

@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +14,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
 
   backend:
     image: ${DOCKERHUB_USERNAME}/expense-manager-backend:latest
@@ -25,8 +24,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     depends_on:
       database:
         condition: service_healthy
@@ -36,12 +35,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
 
   frontend:
     container_name: expense_manager_frontend
     image: ${DOCKERHUB_USERNAME}/expense-manager-frontend:latest
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -50,6 +50,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    restart: unless-stopped
 
 volumes:
   database_data:

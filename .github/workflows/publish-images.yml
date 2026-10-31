@@ -1,5 +1,6 @@
 name: Publish images on DockerHub
 
+# Trigger after successful CI workflow
 on:
   workflow_run:
     workflows:
@@ -8,6 +9,7 @@ on:
       - completed
     branches:
       - main
+      - develop
 
 permissions:
   contents: read    # read permissions for the Github repository

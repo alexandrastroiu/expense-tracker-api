@@ -63,7 +63,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
 
-        run: docker compose up --build -d --wait    # Build before starting containers
+        run: docker compose -f docker-compose.yml up --build -d --wait    # Build before starting containers
                                                     # Wait for services to be healthy before running the next steps
 
       - name: Install Newman
@@ -76,4 +76,4 @@ jobs:
 
       - name: Stop containers
         if: ${{ always() }}           # Always run this step
-        run: docker compose down -v   # Stops and removes the containers, networks, volumes, images created
+        run: docker compose -f docker-compose.yml down -v   # Stops and removes the containers, networks, volumes, images created
